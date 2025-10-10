@@ -1,7 +1,7 @@
 import { parse } from '@babel/parser'
 import { generate as _generate } from '@babel/generator'
 
-class Obfuscator {
+class AbstractObfuscator {
     constructor(code, transformers) {
         this.code = code
         this.transformers = transformers
@@ -36,4 +36,4 @@ class Obfuscator {
     }
 }
 
-export default Obfuscator
+export default AbstractObfuscator

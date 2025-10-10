@@ -1,5 +1,6 @@
 import fileUtils from './utils/file.js'
 import StringTransformer from './transformers/string.js'
+import FLATransformer from './transformers/fla.js'
 import OLLVMObfuscator from './obfuscator/ollvm.js'
 
 function main() {
@@ -8,9 +9,9 @@ function main() {
     const outputFile = inputFile.replace('.js', '.ollvm.js')
     const input = fileUtils.readFile(inputFile)
 
-
     const transformers = [
-        new StringTransformer()
+        new StringTransformer(),
+        new FLATransformer()
     ]
 
     const obfuscator = new OLLVMObfuscator(input, transformers)

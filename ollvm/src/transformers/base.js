@@ -1,6 +1,6 @@
 
 
-class Transformer {
+class AbstractTransformer {
     constructor() {
     }
 
@@ -9,4 +9,4 @@ class Transformer {
     }
 }
 
-export default Transformer
+export default AbstractTransformer
