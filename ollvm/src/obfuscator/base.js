@@ -1,0 +1,39 @@
+import { parse } from '@babel/parser'
+import { generate } from '@babel/generator'
+
+class Obfuscator {
+    constructor(code, transformers) {
+        this.code = code
+        this.ast = this.parse()
+        this.transformers = transformers
+    }
+
+    obfuscate() {
+        throw new Error("Obfuscator must implement obfuscate method");
+    }
+
+    parse() {
+        try {
+            const ast = parse(this.code, {
+                sourceType: 'module',
+                plugins: ['jsx', 'typescript']
+            })
+            return ast
+        } catch (error) {
+            console.error(`Error parsing code: ${error}`)
+            process.exit(1)
+        }
+    }
+
+    generate() {
+        try {
+            const result = generate(this.ast, {})
+            return result.code
+        } catch (error) {
+            console.error(`Error generating code: ${error}`)
+            process.exit(1)
+        }
+    }
+}
+
+export default Obfuscator
