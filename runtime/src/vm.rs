@@ -28,7 +28,7 @@ impl From<u8> for OpCode {
             0x02 => OpCode::Add,
             0x03 => OpCode::Sub,
             0x04 => OpCode::Test,
-            _ => panic!("Invalid opcode: {}", value),
+            _ => panic!("Invalid opcode: {value}"),
         }
     }
 }
@@ -59,7 +59,8 @@ impl Vm {
     }
 
     pub fn run<T>(&mut self, program: &[T]) -> Option<Value>
-    where T: Into<OpCode> + Into<u8> + Clone
+    where
+        T: Into<OpCode> + Into<u8> + Clone,
     {
         while self.pc < program.len() {
             let op = program[self.pc].clone().into();

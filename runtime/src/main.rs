@@ -2,7 +2,6 @@ mod vm;
 
 use vm::Vm;
 
-use crate::vm::{OpCode, Value};
 
 fn main() {
     let mut vm = Vm::new();
@@ -10,5 +9,5 @@ fn main() {
     // let program = [OpCode::Push(value), OpCode::Test];
     let program = [0x04];
     let result = vm.run(&program);
-    println!("Result: {:?}", result);
+    println!("Result: {result:?}");
 }
