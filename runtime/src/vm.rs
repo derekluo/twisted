@@ -34,12 +34,19 @@ impl Vm {
                             self.pc += 8;
                         }
                         ValueType::String => {
-                            if self.pc + 8 > program.len() {
+                            if self.pc + 4 > program.len() {
                                 return None;
                             }
-                            let value = String::from_utf8(program[self.pc..self.pc + 8].to_vec()).unwrap();
+                            let length = u32::from_le_bytes(program[self.pc..self.pc + 4].try_into().unwrap()) as usize;
+                            self.pc += 4;
+
+                            if self.pc + length > program.len() {
+                                return None;
+                            }
+
+                            let value = String::from_utf8(program[self.pc..self.pc + length].to_vec()).unwrap();
                             self.stack.push(Value::String(value));
-                            self.pc += 8;
+                            self.pc += length;
                         }
                         ValueType::Null => {
                             self.stack.push(Value::Null);
@@ -112,5 +119,18 @@ mod tests {
         ];
         let stack = vm.run(&program);
         assert_eq!(stack, Some(Value::Int(123)));
+    }
+
+    #[test]
+    fn test_vm_push_string() {
+        let mut vm = Vm::new();
+        let program = [
+            OpCode::Push.into(),
+            ValueType::String.into(),
+            0x0D, 0x00, 0x00, 0x00, 
+            0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x2C, 0x20, 0x77, 0x6F, 0x72, 0x6C, 0x64, 0x21 // "Hello, world!"
+        ];
+        let stack = vm.run(&program);
+        assert_eq!(stack, Some(Value::String("Hello, world!".to_string())));
     }
 }
