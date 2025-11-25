@@ -68,7 +68,7 @@ class Compiler {
             }
         })
     }
-
+    
     compileExpr(expr) {
         console.log('🔍 编译表达式:', expr.type)
         switch (expr.type) {
