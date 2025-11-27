@@ -34,17 +34,15 @@ class VM {
         this.pc = 0
         while (this.pc < bytecode.length) {
             const opcode = bytecode[this.pc]
-            this.pc++
             switch (opcode) {
                 // stack commands
                 case this.opcodes.Push:
-                    this.stack.push(bytecode[this.pc])
+                    this.stack.push(bytecode[this.pc + 1])
                     this.pc += 1
                     break
                 case this.opcodes.Pop:
                     this.stack.pop()
                     break
-                
                 // arithmetic commands
                 case this.opcodes.Add:
                     const a = this.stack.pop()
@@ -87,13 +85,13 @@ class VM {
                 }
                 // control flow commands
                 case this.opcodes.Jmp: {
-                    const target = bytecode[this.pc]
+                    const target = bytecode[this.pc + 1]
                     this.pc = target
                     break
                 }
                 case this.opcodes.JmpIf: {
                     const condition = this.stack.pop()
-                    const target = bytecode[this.pc]
+                    const target = bytecode[this.pc + 1]
                     if (condition) {
                         this.pc = target
                     } else {
@@ -104,13 +102,13 @@ class VM {
                 // local commands
                 case this.opcodes.LocalStore: {
                     const value = this.stack.pop()
-                    const index = bytecode[this.pc]
+                    const index = bytecode[this.pc + 1]
                     this.locals[index] = value
                     this.pc += 1
                     break
                 }
                 case this.opcodes.LocalLoad: {
-                    const index = bytecode[this.pc]
+                    const index = bytecode[this.pc + 1]
                     const value = this.locals[index]
                     this.stack.push(value)
                     this.pc += 1
@@ -120,20 +118,20 @@ class VM {
                 // global commands
                 case this.opcodes.GlobalStore: {
                     const value = this.stack.pop()
-                    const index = bytecode[this.pc]
+                    const index = bytecode[this.pc + 1]
                     this.globals[index] = value
                     this.pc += 1
                     break
                 }
                 case this.opcodes.GlobalLoad: {
-                    const index = bytecode[this.pc]
+                    const index = bytecode[this.pc + 1]
                     const value = this.globals[index]
                     this.stack.push(value)
                     this.pc += 1
                     break
                 }
                 case this.opcodes.Call: {
-                    const functionIndex = bytecode[this.pc]
+                    const functionIndex = bytecode[this.pc + 1]
                     this.pc += 1
                     const args = this.stack.pop()
                     const func = this.functions[functionIndex]
@@ -147,6 +145,7 @@ class VM {
                     break
                 }
             }
+            this.pc += 1
         }
         return this.stack[this.stack.length - 1]
     }
