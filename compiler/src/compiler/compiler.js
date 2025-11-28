@@ -24,6 +24,9 @@ class Compiler {
         }
         this.variables = new Map()
         this.varIndex = 0
+        this.functions = {
+            'console.log': 0,
+        }
     }
 
     compile() {
@@ -38,8 +41,28 @@ class Compiler {
                         types.isIdentifier(callee.object, { name: 'console' }) &&
                         types.isIdentifier(callee.property, { name: 'log' })
                       ) {
-                        this.bytecode.push(this.opcodes.Call, 0)
+                        this.bytecode.push(this.opcodes.Call, this.functions['console.log'])
                       }
+                }
+            },
+            MemberExpression: {
+                exit: (path) => {
+                    // 当我们退出 MemberExpression 节点时，
+                    // `console` 对象应该已经被 Identifier 访问器处理并加载到栈上了。
+                    
+                    // 在这里，我们需要生成获取属性的字节码。
+                    // 假设我们有一个新的操作码叫做 GetProperty
+                    
+                    // 注意：这里的 property 可能不是一个简单的标识符，
+                    // 比如 a[b]，所以需要更复杂的处理。
+                    // 但对于 console.log，我们可以简化。
+                    if (types.isIdentifier(path.node.property)) {
+                        const propName = path.node.property.name
+                        // 你需要一种方式将属性名 "log" 传递给虚拟机。
+                        // 这通常通过一个常量池（constants pool）来完成。
+                        // 比如：this.bytecode.push(this.opcodes.GetProperty, this.addConstant(propName))
+                        console.log(`📝 准备获取属性: ${propName}`)
+                    }
                 }
             },
             Identifier: {
@@ -50,6 +73,8 @@ class Compiler {
                     if (this.variables.has(varName)) {
                         const index = this.variables.get(varName)
                         this.bytecode.push(this.opcodes.LocalLoad, index)
+                    } else {
+                        throw new ReferenceError(`${varName} is not defined`)
                     }
                 }
             },
