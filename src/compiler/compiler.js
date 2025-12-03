@@ -1,20 +1,10 @@
 // encoder/src/compiler.js
 import { parse } from '@babel/parser'
-import traverse from '@babel/traverse'
-import * as types from '@babel/types'
-import { OPCODE } from '../constant.js'
 
 class Compiler {
-    constructor(source) {
+    constructor(source, opcode) {
         this.ast = this.parse(source)
-        this.ir = []
-        this.bytecode = []
-        this.opcode = OPCODE
-        this.variables = new Map()
-        this.varIndex = 0
-        this.functions = {
-            'console.log': 0,
-        }
+        this.opcode = opcode
     }
 
     parse(source) {
@@ -23,12 +13,41 @@ class Compiler {
     }
 
     compile() {
-        
-        traverse.default(ast, visitor)
+        const ir = this.buildIr(this.ast.program.body)
+        // traverse.default(ast, visitor)
         console.log("🤖 Compiled intermediate representation.")
         return this.bytecode
     }
 
+    buildIr(nodes) {
+        nodes.forEach((node) => {
+            switch (node.type) {
+                case 'VariableDeclaration':
+                    this.buildVariableDeclaration(node)
+                    break
+                case 'BinaryExpression':
+                    this.buildBinaryExpression(node)
+                default:
+                    break
+            }
+        })
+    }
+
+    buildVariableDeclaration(node) {
+        node.declarations.forEach((declaration) => {
+            switch (declaration.id.type) {
+                case 'Identifier':
+                    console.log(declaration.id.name)
+                    break
+                default:
+                    throw new Error(`Unsupported variable declaration type: ${declaration.id.type}`)
+            }
+        })
+    }
+
+    buildBinaryExpression(node) {
+        console.log(node.type)
+    }
 }
 
 export default Compiler
