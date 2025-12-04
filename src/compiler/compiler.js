@@ -25,9 +25,9 @@ class Compiler {
 
     visitor() {
         const visitor = {
-            VariableDeclaration: {
+            VariableDeclarator: {
                 enter: (path) => {
-                    console.log(`🤖 VariableDeclaration: ${path.node.type}`)
+                    console.log(`🤖 VariableDeclarator: ${path.node.type}`)
                 }
                 
             },
