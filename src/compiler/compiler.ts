@@ -1,6 +1,8 @@
-import { default as traverse } from '@babel/traverse';
-import { parse } from '@babel/parser';
-import type { NodePath, Visitor } from '@babel/core';
+import {default as traverse} from '@babel/traverse';
+import * as parser from '@babel/parser';
+import type { NodePath, Visitor } from '@babel/traverse';
+import type { ParseResult } from '@babel/parser';
+
 
 import type {
   VariableDeclarator,
@@ -20,7 +22,7 @@ interface ScopeInfo {
 }
 
 class Compiler {
-  private ast: Program;
+  private ast: ParseResult;
   private opcode: Record<string, number>;
   public ir: Instruction[];
   private globals: Map<string, number>;
@@ -28,7 +30,7 @@ class Compiler {
   private functionScopes: Map<number, ScopeInfo>;
 
   constructor(source: string, opcode: Record<string, number>) {
-    this.ast = parse(source, { sourceType: 'module' }).program;
+    this.ast = parser.parse(source, { sourceType: 'module' });
     this.opcode = opcode;
     this.ir = [];
     this.globals = new Map();
@@ -65,39 +67,19 @@ class Compiler {
           if (!binding) return;
           if (binding.scope.path.isProgram()) {
             if (!this.globals.has(varName)) {
-              this.globals.set(varName, this.globalIndex++);
-            }
-            const index = this.globals.get(varName);
-            this.ir.push({ opcode: this.opcode.GlobalStore, args: [index] });
-          } else {
-            const funcScope = path.findParent((p) => p.isFunction());
-            if (funcScope) {
-              const scopeInfo = this.functionScopes.get(funcScope.scope.uid);
-              if (scopeInfo && !scopeInfo.locals.has(varName)) {
-                const index = scopeInfo.localIndex++;
-                scopeInfo.locals.set(varName, index);
-                this.ir.push({ opcode: this.opcode.LocalStore, args: [index] });
-              }
+              console.log("🤖 VariableDeclarator Global variable: ", varName);
             }
           }
-        }
+        } 
       },
       Identifier: {
         enter: (path: NodePath<Identifier>) => {
           if (!path.isReferencedIdentifier()) return;
           const varName = path.node.name;
           const binding = path.scope.getBinding(varName);
-          if (!binding) throw new Error(`ReferenceError: ${varName} is not defined.`);
+          if (!binding) return;
           if (binding.scope.path.isProgram()) {
-            const index = this.globals.get(varName);
-            this.ir.push({ opcode: this.opcode.GlobalLoad, args: [index] });
-          } else {
-            const funcScope = path.findParent((p) => p.isFunction());
-            if (funcScope) {
-              const scopeInfo = this.functionScopes.get(funcScope.scope.uid);
-              const index = scopeInfo!.locals.get(varName);
-              this.ir.push({ opcode: this.opcode.LocalLoad, args: [index] });
-            }
+            console.log("🤖 Identifier Global variable: ", varName);
           }
         }
       },
