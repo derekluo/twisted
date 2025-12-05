@@ -1,19 +1,23 @@
-const OPCODE = {
-	Push: 0x00,
-	Pop: 0x01,
-	Add: 0x02,
-	Sub: 0x03,
-	Mul: 0x04,
-	Div: 0x05,
-	Jmp: 0x06,
-	JmpIf: 0x07,
-	LocalStore: 0x08,
-	LocalLoad: 0x09,
-	GlobalStore: 0x0a,
-	GlobalLoad: 0x0b,
-	Call: 0x0c,
+const enum OPCODE {
+	Push = 0x00,
+	Pop = 0x01,
+	Add = 0x02,
+	Sub = 0x03,
+	Mul = 0x04,
+	Div = 0x05,
+	Jmp = 0x06,
+	JmpIf = 0x07,
+	LocalStore = 0x08,
+	LocalLoad = 0x09,
+	GlobalStore = 0x0a,
+	GlobalLoad = 0x0b,
+	Call = 0x0c,
 };
 
-const HEADER = {};
+const enum HEADER {
+	MagicNumber = 0x4a53,
+	Version = 0x01,
+	HeaderSize = 0x06,
+}
 
 export { OPCODE, HEADER };

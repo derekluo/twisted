@@ -17,15 +17,13 @@ interface ScopeInfo {
 
 class Compiler {
 	private ast: ParseResult;
-	private opcode: Record<string, number>;
 	public ir: Instruction[];
 	private globals: Map<string, number>;
 	private globalIndex: number;
 	private functionScopes: Map<number, ScopeInfo>;
 
-	constructor(source: string, opcode: Record<string, number>) {
+	constructor(source: string) {
 		this.ast = parser.parse(source, { sourceType: "module" });
-		this.opcode = opcode;
 		this.ir = [];
 		this.globals = new Map();
 		this.globalIndex = 0;
@@ -38,7 +36,7 @@ class Compiler {
 		return this.ir;
 	}
 
-	visitor(): Visitor {
+    private visitor(): Visitor {
 		return {
 			Function: {
 				enter: (path: NodePath<Function>) => {
