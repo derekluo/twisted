@@ -1,24 +1,27 @@
 ## 部署与混淆工作流（初始方案）
 
 为了先把整体链路跑通，我们采用一条**相对简单、易实现**的 jsvmp 工作流：  
-先完成「源码 → 字节码 → VM 执行」这条主线，再在最外层对 `VM + bytecode` 做统一混淆。
+先完成「源码 → AST → IR → 字节码 → VM 执行」这条主线，再在最外层对 `VM + bytecode` 做统一混淆。
 
 ---
 
-## 阶段一：业务逻辑 JS → AST → 字节码
+## 阶段一：业务逻辑 JS → AST → IR → 字节码
 
-- **目标**：把清晰的业务 JS 逻辑编译成可由自定义 VM 执行的字节码（bytecode）。
+- **目标**：把清晰的业务 JS 逻辑编译成中间表示 IR，再编码为可由自定义 VM 执行的字节码（bytecode）。
 - **输入**：业务源码 JS 文件（例如 `signature.js`）。
 - **过程**：
   1. **解析阶段（Parse）**
      - 使用 Babel 等工具将 JS 源码解析为 AST。
   2. **语义遍历（AST Traverse）**
      - 按照项目的编译规则，识别变量声明、表达式、控制流结构（`if/for/while` 等）。
-  3. **指令生成（Codegen → Bytecode）**
-     - 将 AST 节点映射为自定义的 VM 指令序列：
-       - 例如：`BinaryExpression(+)` → `PUSH` / `ADD` 等 opcode。
-       - 控制流结构转换为跳转指令、标签等。
-- **输出**：一份未混淆或轻度混淆的字节码文件，例如：`signature.bytecode`。
+  3. **IR 生成（Codegen → IR）**
+     - 将 AST 节点映射为 Dict IR（见 `docs/ir.md`），形成由 Block / Instruction / Arg 组成的中间表示；
+     - 控制流结构首先体现在 IR 的 Block 划分与指令序列中，便于后续在 IR 层做控制流平坦化、垃圾指令等混淆。
+  4. **汇编（Assembler：IR → Bytecode）**
+     - 将 IR 中的 opcode / args 编码为线性字节码数组，处理 Header、字符串池、DYN_ADDR 回填等底层细节。
+- **输出**：
+  - 一份结构化 IR（便于调试与混淆）；
+  - 一份未混淆或轻度混淆的字节码文件，例如：`signature.bytecode`。
 
 > 在这个初始方案中，**AST → bytecode 阶段只做最小必要的处理**，以保证编译器简单、可调试。后续可以在这一阶段逐步加入更复杂的“指令级混淆”能力。
 

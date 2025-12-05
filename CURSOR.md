@@ -9,6 +9,17 @@ Twisted 是一个反爬虫虚拟机系统，包含三个核心模块：
 - **Runtime**: Rust栈式虚拟机
 - **OLLVM**: JavaScript代码混淆器
 
+整个编译与执行管线可以概括为：
+
+- **JavaScript 源码 → Babel AST → IR（中间表示）→ Bytecode 数组 → VM 执行**
+
+其中 **IR（中间层）** 是本项目的核心设计之一：
+
+- **唯一中间表示**：Encoder 不直接从 AST 生成字节码，而是先生成字典结构的 IR（Dict IR），所有后续优化、混淆、FLA 等都在 IR 上操作；
+- **稳定抽象层**：VM 只关心线性字节码，IR 层屏蔽了 AST 细节与混淆策略，便于后续替换前端（例如支持更多 JS 语法）而不影响 VM；
+- **可标注/可分析**：IR 的 Block、Instruction、Arg 都可以挂载 `tags`，用于指纹采集、反调试、控制不同区域的混淆强度；
+- **规范位置**：IR 的完整字段与示例定义在 `docs/ir.md`，新增 Pass / 修改指令集时需要优先与该文件保持一致。
+
 ## 开发规则
 
 ### JavaScript 代码规范 (Encoder/OLLVM)
