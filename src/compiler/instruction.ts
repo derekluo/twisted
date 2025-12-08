@@ -11,6 +11,21 @@ interface Instruction {
 	tags: string[];
 }
 
+interface BasicBlock {
+	id: number;
+	start: number;
+	end: number;
+	instructions: Instruction[];
+	predecessors: BasicBlock[]
+	successors: BasicBlock[]
+}
+
+interface ControlFlowGraph {
+	entry: number;
+	exit: number;
+	blocks: Map<number, BasicBlock>;
+}
+
 function createInstruction(opcode: OPCODE, args: Arg[], tags: string[]): Instruction {
 	return {
 		opcode,
