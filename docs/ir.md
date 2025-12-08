@@ -1,8 +1,19 @@
-## JSVMP IR 设计说明（Dict IR）
+## Twisted / JSVMP IR 设计说明（Dict IR）
 
-本项目的编译管线：  
-**JavaScript 源码 → Babel AST → IR（本文件定义）→ Bytecode 数组 → JS VM 执行**。  
-IR 同时作为**唯一中间表示 + 编码格式**，FLA、混淆等都在这一层完成。
+本项目的编译管线设计为：  
+**JavaScript 源码 → Babel AST → IR（本文件定义）→ Bytecode 数组 → JS VM / Rust VM 执行**。  
+IR 同时作为**中间表示 + 编码格式**，FLA、混淆等都在这一层完成。
+
+### 当前实现 vs 规划状态
+
+- **当前仓库实现**：
+  - 编译器（`src/compiler/compiler.ts`）输出的是一维的 **线性 IR：`Instruction[]`**；
+  - 其中 `Instruction` / `Arg` 的结构定义在 `src/compiler/instruction.ts` 中，仅包含 `opcode` / `args` / `tags`；
+  - 还没有真正落地“以 Block 为单位的 Dict IR”，也没有把 IR 编码为真实的字节码文件。
+- **本文件描述的 Dict IR**：
+  - 是下一阶段要引入的 **目标 IR 规范**，用于支撑控制流平坦化、块级混淆等高级特性；
+  - 未来会在编译阶段先从 AST 生成 Dict IR（按 Block 划分），然后再由 Assembler 将 Dict IR 编码为字节码；
+  - 当前你在代码中看到的 `Instruction[]` 可以理解为“Dict IR 中某个 Block 的扁平化指令列表”的雏形。
 
 ---
 
@@ -67,7 +78,7 @@ type Instruction = {
     - `0x08` → LocalStore  
     - `0x09` → LocalLoad  
     - `0x0C` → Call / CallBuiltin  
-  - 具体定义在 `jsvmp/src/vm/vm.js` 中的 `this.opcodes`。
+  - 在当前仓库中，Opcode 枚举定义在 `src/constant.ts` 的 `OPCODE` 中，对应的执行逻辑在 `src/vm/vm.ts` 中的 `switch (opcode)`。
 
 - **tags**（可选）
   - 指令级标签，例如：
@@ -187,6 +198,8 @@ const ir = {
     - 根据 `tags` 对不同逻辑块施加不同强度的混淆。
   - CFG 可在需要时从 IR 的 `instructions` 动态推导，而不固定存储在 IR 里。
 
-本文件描述的 Dict IR 是当前 jsvmp/encoder 的**唯一 IR 规范**，后续设计/实现 Pass 时请保持与此结构对齐。
+本文件描述的 Dict IR 是 Twisted 未来的**目标 IR 规范**：  
+- 当前实现阶段：编译器只输出线性 `Instruction[]`，还没有 Block 级 Dict IR；  
+- 未来在引入 Block / 多入口控制流后，应当以本文档为准，逐步把编译器 IR 从线性数组演进到 Dict IR 结构，并在此基础上实现混淆 Pass。
 
 

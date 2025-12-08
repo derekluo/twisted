@@ -20,27 +20,35 @@ Twisted 套件包含三个核心模块，它们可以独立工作，也可以协
 
 ## 🏗️ 项目结构（当前代码架构）
 
-仓库已收敛为单一包结构，核心代码集中在 `src/` 目录，下游通过统一的编译管线工作：
+当前仓库已经收敛为**单一 npm 包 + TypeScript 实现**，核心代码集中在 `src/` 目录：
 
 ```text
 twisted/
 ├── src/
-│   ├── constant.js          # Opcode / Header 等常量定义
-│   ├── index.js             # 示例入口，串联 Compiler → Assembler → VM
+│   ├── constant.ts           # Opcode / Header 等常量定义
+│   ├── index.ts              # 示例入口，当前用于演示编译器输出 IR
 │   ├── compiler/
-│   │   └── compiler.js      # JS 源码 → IR (Instruction[]) 的编译器
+│   │   ├── compiler.ts       # JS 源码 → 线性 Instruction[] IR 的编译器
+│   │   └── instruction.ts    # IR 结构定义与 createInstruction 工厂函数
 │   ├── assembler/
-│   │   └── assembler.js     # IR → Bytecode 的汇编器（处理 Header、字符串池、DYN_ADDR 回填）
+│   │   └── assembler.ts      # 预留：IR → Bytecode 的汇编器（尚未实现）
 │   ├── vm/
-│   │   └── vm.js            # 栈式虚拟机，解释执行字节码
-│   └── obfuscator/
-│       ├── base.js          # 混淆器基础类
-│       └── passes/          # IR 级混淆 Pass（控制流/垃圾指令等，可插拔）
+│   │   └── vm.ts             # TypeScript 实现的栈式虚拟机，解释执行字节码
+│   ├── obfuscator/
+│   │   ├── base.js           # AST 混淆器基础类（基于 Babel）
+│   │   └── passes/
+│   │       └── base.js       # 预留：混淆 Pass 基类
+│   └── utils/
+│       ├── bytecode.js       # 十六进制 / 十进制与字节码数组互转工具
+│       └── file.js           # 文件读写工具
+├── files/
+│   └── test.js               # 示例 JS 源码，用于编译/调试
 └── docs/
-    └── ir.md                # Dict IR 规范文档（opcode + args[{type,value}] + Block）
+    ├── ir.md                 # Dict IR 规范文档（opcode + args[{type,value}] + Block）
+    └── workflow.md           # 部署与混淆工作流设计
 ```
 
-整体编译/执行流水线为：
+从设计上看，整体编译/执行流水线仍然是：
 
 ```mermaid
 graph LR
@@ -50,7 +58,9 @@ graph LR
   D --> E[JS VM<br/>解释执行字节码]
 ```
 
-## 🚀 快速开始
+目前代码已经完整实现了 **Compiler（源码 → IR）** 与 **VM（执行字节码）**，`Assembler` 与完整的“IR → Bytecode → VM 串联 Demo”仍在开发中。
+
+## 🚀 快速开始（基于当前仓库）
 
 ### 环境要求
 - Node.js >= 16
@@ -58,50 +68,34 @@ graph LR
 
 ### 安装依赖
 
-为每个模块独立安装依赖：
+在仓库根目录一次性安装依赖：
+
 ```bash
-# 安装混淆器依赖
-cd obfuscator
-npm install
-
-# 安装编译器依赖
-cd ../compiler
-npm install
-
-# 安装虚拟机依赖
-cd ../vm
+cd twisted
 npm install
 ```
 
 ## 📖 使用指南
 
-### 1. (可选) 混淆 JavaScript 代码
-使用 `obfuscator` 来增加代码的分析难度。
+### 1. 运行示例编译（源码 → IR）
+
+当前 `src/index.ts` 中内置了一段示例代码，会调用 `Compiler` 并打印 IR：
+
 ```bash
-cd obfuscator
-node src/index.js files/test.js
-# 这将生成一个 files/test.ollvm.js 文件
+npm run start
 ```
 
-### 2. 编译 JavaScript 为字节码
-使用 `compiler` 将 JS 文件（可以是原始的或混淆过的）转换为字节码。
-```bash
-cd compiler
-# 编译原始文件
-node src/index.js files/test.js
+你会在控制台看到形如 `Instruction[]` 的中间表示输出，方便调试指令序列与作用域处理。
 
-# 或者编译混淆后的文件
-node src/index.js ../obfuscator/files/test.ollvm.js
-```
-编译器会输出字节码并写入 `.bin` 文件。
+### 2.（规划中）IR → Bytecode → VM 执行
 
-### 3. 在 VM 中执行字节码
-将生成的字节码复制到 VM 入口中进行测试和执行。
-```bash
-cd vm
-# (手动将字节码数组粘贴到 src/index.js 中)
-node src/index.js
-```
+下一步工作是补齐 `assembler/assembler.ts`，将 `Instruction[]` 编码为实际的字节码数组，并编写一个 Demo 将：
+
+- `Compiler` 生成的 IR；
+- `Assembler` 生成的字节码；
+- `VM` 的解释执行逻辑  
+
+串成一个完整的“源码 → IR → Bytecode → VM 执行”示例。实现完成后，本节会补充具体命令与使用示例。
 
 ## 🔧 核心功能
 
