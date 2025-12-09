@@ -1,12 +1,16 @@
-import { OPCODE } from "../constant.js";
+import { Opcode } from "../constant.js";
+
+enum ArgKind {
+
+}
 
 interface Arg {
-	type: number;
+	kind: ArgKind;
 	value: any;
 }
 
 interface Instruction {
-	opcode: OPCODE;
+	opcode: Opcode;
 	args: Arg[];
 	tags: string[];
 }
@@ -26,11 +30,11 @@ interface ControlFlowGraph {
 	blocks: Map<number, BasicBlock>;
 }
 
-function createInstruction(opcode: OPCODE, args: Arg[], tags: string[]): Instruction {
+function createInstruction(opcode: Opcode, args: Arg[] | null = null, tags: string[] | null = null): Instruction {
 	return {
 		opcode,
-		args,
-		tags,
+		args: args ?? [],
+		tags: tags ?? [],
 	};
 }
 

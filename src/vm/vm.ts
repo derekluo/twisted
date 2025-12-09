@@ -1,4 +1,4 @@
-import { OPCODE } from "../constant.js";
+import { Opcode } from "../constant.js";
 
 class VM {
 	private stack: any[];
@@ -26,15 +26,15 @@ class VM {
 			const opcode = bytecode[this.pc];
 			switch (opcode) {
 				// stack commands
-				case OPCODE.Push:
+				case Opcode.Push:
 					this.stack.push(bytecode[this.pc + 1]);
 					this.pc += 1;
 					break;
-				case OPCODE.Pop:
+				case Opcode.Pop:
 					this.stack.pop();
 					break;
 				// arithmetic commands
-				case OPCODE.Add:
+				case Opcode.Add:
 					const a = this.stack.pop();
 					const b = this.stack.pop();
 					if (typeof a === "number" && typeof b === "number") {
@@ -43,7 +43,7 @@ class VM {
 						throw new Error("Invalid operands for Add");
 					}
 					break;
-				case OPCODE.Sub: {
+				case Opcode.Sub: {
 					const a = this.stack.pop();
 					const b = this.stack.pop();
 					if (typeof a === "number" && typeof b === "number") {
@@ -53,7 +53,7 @@ class VM {
 					}
 					break;
 				}
-				case OPCODE.Mul: {
+				case Opcode.Mul: {
 					const a = this.stack.pop();
 					const b = this.stack.pop();
 					if (typeof a === "number" && typeof b === "number") {
@@ -63,7 +63,7 @@ class VM {
 					}
 					break;
 				}
-				case OPCODE.Div: {
+				case Opcode.Div: {
 					const a = this.stack.pop();
 					const b = this.stack.pop();
 					if (typeof a === "number" && typeof b === "number") {
@@ -74,12 +74,12 @@ class VM {
 					break;
 				}
 				// control flow commands
-				case OPCODE.Jmp: {
+				case Opcode.Jmp: {
 					const target = bytecode[this.pc + 1];
 					this.pc = target;
 					break;
 				}
-				case OPCODE.JmpIf: {
+				case Opcode.JmpIf: {
 					const condition = this.stack.pop();
 					const target = bytecode[this.pc + 1];
 					if (condition) {
@@ -90,14 +90,14 @@ class VM {
 					break;
 				}
 				// local commands
-				case OPCODE.LocalStore: {
+				case Opcode.LocalStore: {
 					const value = this.stack.pop();
 					const index = bytecode[this.pc + 1];
 					this.locals[index] = value;
 					this.pc += 1;
 					break;
 				}
-				case OPCODE.LocalLoad: {
+				case Opcode.LocalLoad: {
 					const index = bytecode[this.pc + 1];
 					const value = this.locals[index];
 					this.stack.push(value);
@@ -106,21 +106,21 @@ class VM {
 				}
 
 				// global commands
-				case OPCODE.GlobalStore: {
+				case Opcode.GlobalStore: {
 					const value = this.stack.pop();
 					const index = bytecode[this.pc + 1];
 					this.globals[index] = value;
 					this.pc += 1;
 					break;
 				}
-				case OPCODE.GlobalLoad: {
+				case Opcode.GlobalLoad: {
 					const index = bytecode[this.pc + 1];
 					const value = this.globals[index];
 					this.stack.push(value);
 					this.pc += 1;
 					break;
 				}
-				case OPCODE.Call: {
+				case Opcode.Call: {
 					const functionIndex = bytecode[this.pc + 1];
 					this.pc += 1;
 					const args = this.stack.pop();

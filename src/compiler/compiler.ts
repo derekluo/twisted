@@ -10,7 +10,7 @@ import {
 	NumericLiteral,
 	BinaryExpression,
 } from "@babel/types";
-import { OPCODE } from "../constant.js";
+import { Opcode } from "../constant.js";
 import { createInstruction, type Instruction } from "./instruction.js";
 
 class Compiler {
@@ -52,11 +52,9 @@ class Compiler {
 								varName,
 								this.globalIndex,
 							);
-							this.ir.push(
+							this.pushIr(
 								createInstruction(
-									OPCODE.GlobalStore,
-									[{ type: 1, value: this.globalIndex }],
-									[],
+									Opcode.GlobalStore
 								),
 							);
 							this.globalIndex++;
@@ -75,8 +73,8 @@ class Compiler {
 					if (binding.scope.path.isProgram()) {
 						const index = this.globals.get(varName);
 						console.log("🤖 Identifier Global variable: ", varName, index);
-						this.ir.push(
-							createInstruction(OPCODE.GlobalLoad, [{ type: 1, value: index }], []),
+						this.pushIr(
+							createInstruction(Opcode.GlobalLoad),
 						);
 					}
 				},
@@ -84,16 +82,16 @@ class Compiler {
 			BinaryExpression: {
 				exit: (path: NodePath<BinaryExpression>) => {
 					console.log("🤖 BinaryExpression: ", path.node.operator);
-					const operatorMap: Record<string, OPCODE> = {
-						"+": OPCODE.Add,
-						"-": OPCODE.Sub,
-						"*": OPCODE.Mul,
-						"/": OPCODE.Div,
+					const operatorMap: Record<string, Opcode> = {
+						"+": Opcode.Add,
+						"-": Opcode.Sub,
+						"*": Opcode.Mul,
+						"/": Opcode.Div,
 					};
 					const operator = operatorMap[path.node.operator];
 					if (operator) {
-						this.ir.push(
-							createInstruction(operator, [{ type: 0, value: undefined }], []),
+						this.pushIr(
+							createInstruction(operator),
 						);
 					} else {
 						throw new Error(`🤖 Unknown operator: ${path.node.operator}`);
@@ -103,12 +101,16 @@ class Compiler {
 			NumericLiteral: {
 				exit: (path: NodePath<NumericLiteral>) => {
 					console.log("🤖 NumberLiteral: ", path.node.value);
-					this.ir.push(
-						createInstruction(OPCODE.Push, [{ type: 0, value: path.node.value }], []),
+					this.pushIr(
+						createInstruction(Opcode.Push, [{ kind: 0, value: path.node.value }]),
 					);
 				},
 			},
 		};
+	}
+
+	private pushIr(instruction: Instruction) {
+		this.ir.push(instruction);
 	}
 }
 

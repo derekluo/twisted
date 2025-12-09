@@ -1,4 +1,4 @@
-const enum OPCODE {
+const enum Opcode {
 	Push = 0x00,
 	Pop = 0x01,
 	Add = 0x02,
@@ -14,10 +14,4 @@ const enum OPCODE {
 	Call = 0x0c,
 }
 
-const enum HEADER {
-	MagicNumber = 0x4a53,
-	Version = 0x01,
-	HeaderSize = 0x06,
-}
-
-export { OPCODE, HEADER };
+export { Opcode };
