@@ -1,4 +1,4 @@
-import { ArgKind, type Instruction } from "../compiler/instruction.js";
+import { ArgKind, type Instruction } from "../instruction.js";
 
 class Assembler {
 	private bytecode: number[] = [];
