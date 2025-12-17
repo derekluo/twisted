@@ -4,7 +4,7 @@ import VM from "./vm/vm.js";
 
 function main() {
 	const code = `
-console.log(10)
+window.console.log(123 + 1, 1)
     `;
 	const compiler = new Compiler(code);
 	const ir = compiler.compile();

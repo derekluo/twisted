@@ -4,6 +4,7 @@ enum ArgKind {
 	Undefined = 0,
 	String = 1,
 	Number = 2,
+	ArgLength = 3,
 }
 
 interface Arg {

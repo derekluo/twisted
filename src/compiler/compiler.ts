@@ -4,15 +4,16 @@ import type { NodePath, Visitor } from "@babel/traverse";
 import type { ParseResult } from "@babel/parser";
 
 import {
-	type VariableDeclarator,
-	type Identifier,
-	type Function,
+	VariableDeclarator,
+	Identifier,
+	Function,
 	NumericLiteral,
 	BinaryExpression,
 	CallExpression,
-	MemberExpression,
 	LogicalExpression,
 	ThrowStatement,
+	MemberExpression,
+	Expression,
 } from "@babel/types";
 import { Opcode } from "../constant.js";
 import { ArgKind, createInstruction, type Instruction } from "../instruction.js";
@@ -43,13 +44,12 @@ class Compiler {
 	private visitor(): Visitor {
 		return {
 			Function: {
-				enter: (path: NodePath<Function>) => {},
+				exit: (path: NodePath<Function>) => {},
 			},
 			CallExpression: {
 				exit: (path: NodePath<CallExpression>) => {
-					path.node.arguments.forEach(node => {
-						console.log("🤖 CallExpression argument: ", (node as NumericLiteral).value);
-					})
+					console.log("🤖 CallExpression length: ", path.node.arguments.length);
+					console.log("🤖 CallExpression callee: ", path.node.callee.type);
 				}
 			},
 			LogicalExpression: {
@@ -78,26 +78,24 @@ class Compiler {
 				},
 			},
 			Identifier: {
-				enter: (path: NodePath<Identifier>) => {
+				exit: (path: NodePath<Identifier>) => {
 					if (!path.isReferencedIdentifier()) return;
-					const varName = path.node.name;
-
-					if (this.dependencies.includes(varName)) {
-						return;
-					}
-
-					const binding = path.scope.getBinding(varName);
-					if (!binding) return;
-					if (binding.scope.path.isProgram()) {
-						const index = this.globals.get(varName);
-						console.log("🤖 Identifier Global variable: ", varName, index);
-						this.pushIr(
-							createInstruction(Opcode.Load, [
-								{ kind: ArgKind.Number, value: index },
-							]),
-						);
+					if (this.dependencies.includes(path.node.name)) {
+						console.log("🤖 Identifier %s is a dependency", path.node.name);
+					} else {
+						console.log("🤖 Identifier %s: %s", path.node.name, path.parentPath?.node?.type);
 					}
 				},
+			},
+			MemberExpression: {
+				exit: (path: NodePath<MemberExpression>) => {
+					if (path.node.computed) return
+					const object = path.node.object as Identifier | Expression;
+					const property = path.node.property as Identifier | Expression;
+					if (property.type === "Identifier") {
+						console.log("🤖 MemberExpression fetch dependency %s", property.name);
+					}
+				}
 			},
 			BinaryExpression: {
 				exit: (path: NodePath<BinaryExpression>) => {
@@ -118,7 +116,7 @@ class Compiler {
 			},
 			NumericLiteral: {
 				exit: (path: NodePath<NumericLiteral>) => {
-					console.log("🤖 NumberLiteral: ", path.node.value);
+					console.log("🤖 NumericLiteral: ", path.node.value);
 					this.pushIr(
 						createInstruction(Opcode.Push, [
 							{ kind: ArgKind.Number, value: path.node.value },
