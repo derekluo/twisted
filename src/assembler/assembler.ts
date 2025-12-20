@@ -25,6 +25,18 @@ class Assembler {
 					break;
 				case ArgKind.Undefined:
 					throw new Error(`Undefined arg kind: ${arg.kind}`);
+				case ArgKind.Dependency:
+					this.bytecode.push(arg.value);
+					break;
+				case ArgKind.Property:
+					this.bytecode.push(arg.value);
+					break;
+				case ArgKind.Parameter:
+					this.bytecode.push(arg.value);
+					break;
+				case ArgKind.ArgLength:
+					this.bytecode.push(arg.value);
+					break;
 				default:
 					throw new Error(`Unknown arg kind: ${arg.kind}`);
 			}

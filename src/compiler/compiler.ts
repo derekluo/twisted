@@ -18,7 +18,7 @@ import {
 	Statement,
 } from "@babel/types";
 import { Opcode } from "../constant.js";
-import { ArgKind, createInstruction, type Instruction } from "../instruction.js";
+import { ArgKind, createArg, createInstruction, type Instruction } from "../instruction.js";
 
 class Compiler {
 	private program: Program;
@@ -93,43 +93,71 @@ class Compiler {
 		node.arguments.forEach(argument => {
 			this.compileExpression(argument as Expression);
 		});
+		const ir = createInstruction(Opcode.Call, [createArg(ArgKind.ArgLength, node.arguments.length)]);
+		this.pushIr(ir);
 		console.log("🤖 Compiling CallExpression");
 	}
 
 	private compileIdentifier(node: Identifier) {
-		console.log("🤖 Compiling Identifier");
-		if (this.dependencies.includes(node.name)) {
-			console.log("🤖 Identifier fetch dependency %s", node.name);
-			return
-		}
+		console.log("🤖 Compiling Identifier name: %s", node.name);
 	}
 
 	private compileMemberExpression(node: MemberExpression) {
-		switch (node.object.type) {
+		const object = node.object;
+		const property = node.property;
+		switch (object.type) {
 			case "Identifier":
-				this.compileIdentifier(node.object as Identifier);
+				if (this.dependencies.includes(object.name)) {
+					console.log("🤖 Identifier fetch dependency %s", object.name);
+					const index = this.dependencies.indexOf(object.name);
+					const ir = createInstruction(Opcode.Push, [createArg(ArgKind.Dependency, index)]);
+					this.pushIr(ir);
+				} else {
+					this.compileIdentifier(object as Identifier);
+				}
 				break;
 			case "MemberExpression":
-				this.compileMemberExpression(node.object as MemberExpression);
+				this.compileMemberExpression(object as MemberExpression);
 				break;
 			case "CallExpression":
-				this.compileCallExpression(node.object as CallExpression);
-				break;
-			case "Identifier":
-				this.compileIdentifier(node.object as Identifier);
+				this.compileCallExpression(object as CallExpression);
 				break;
 			default:
-				throw new Error(`Unsupported object type: ${node.object.type}`);
+				throw new Error(`Unsupported object type: ${object.type}`);
+		}
+		switch (property.type) {
+			case "Identifier":
+				console.log("🤖 Compiling MemberExpression property: %s", property.name);
+				const ir = createInstruction(Opcode.Push, [createArg(ArgKind.Property, property.name)]);
+				this.pushIr(ir);
+				break;
+			default:
+				throw new Error(`Unsupported property type: ${property.type}`);
 		}
 		console.log("🤖 Compiling MemberExpression");
 	}
 
 	private compileNumericLiteral(node: NumericLiteral) {
+		this.pushIr(createInstruction(Opcode.Push, [createArg(ArgKind.Number, node.value)]));
 		console.log("🤖 Compiling NumericLiteral");
 	}
 
 	private compileBinaryExpression(node: BinaryExpression) {
-		console.log("🤖 Compiling BinaryExpression");
+		const left = node.left;
+		const right = node.right;
+		const operator = node.operator;
+		this.compileExpression(left as Expression);
+		this.compileExpression(right as Expression);
+		switch (operator) {
+			case "+":
+				this.pushIr(createInstruction(Opcode.Add));
+				break;
+			case "-":
+				this.pushIr(createInstruction(Opcode.Sub));
+				break;
+			default:
+				throw new Error(`Unsupported operator: ${operator}`);
+		}
 	}
 
 	private pushIr(instruction: Instruction) {

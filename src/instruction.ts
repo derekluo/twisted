@@ -5,6 +5,9 @@ enum ArgKind {
 	String = 1,
 	Number = 2,
 	ArgLength = 3,
+	Dependency = 4,
+	Property = 5,
+	Parameter = 6,
 }
 
 interface Arg {
@@ -15,7 +18,6 @@ interface Arg {
 interface Instruction {
 	opcode: Opcode;
 	args: Arg[];
-	tags: string[];
 }
 
 interface BasicBlock {
@@ -36,13 +38,18 @@ interface ControlFlowGraph {
 function createInstruction(
 	opcode: Opcode,
 	args: Arg[] | null = null,
-	tags: string[] | null = null,
 ): Instruction {
 	return {
 		opcode,
 		args: args ?? [],
-		tags: tags ?? [],
 	};
 }
 
-export { Instruction, Arg, createInstruction, ArgKind };
+function createArg(kind: ArgKind, value: any): Arg {
+	return {
+		kind,
+		value,
+	};
+}
+
+export { Instruction, Arg, createInstruction, ArgKind, createArg };

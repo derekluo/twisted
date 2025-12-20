@@ -4,15 +4,13 @@ class VM {
 	private stack: any[];
 	private globals: any[];
 	private pc: number;
-	private functions: { [key: number]: (v: any) => void };
+	private dependencies: object[];
 
-	constructor() {
+	constructor(dependencies: object[]) {
 		this.stack = [];
 		this.globals = [];
 		this.pc = 0;
-		this.functions = {
-			0: (v) => console.log("console.log: ", v),
-		};
+		this.dependencies = dependencies;
 	}
 
 	execute(bytecode: number[]) {
@@ -101,18 +99,10 @@ class VM {
 					this.pc += 1;
 					break;
 				}
-				case Opcode.RuntimeCall: {
-					const functionIndex = bytecode[this.pc + 1];
-					this.pc += 1;
-					const args = this.stack.pop();
-					const func = this.functions[functionIndex];
-					if (!func) {
-						throw new Error(`Function not found: ${functionIndex}`);
-					}
-					const result = func(args);
-					if (result !== undefined) {
-						this.stack.push(result);
-					}
+				case Opcode.Call: {
+					const dependencyIndex = bytecode[this.pc + 1];
+					const argsLength = bytecode[this.pc + 2];
+					console.log("🤖 Calling dependency: %s", dependencyIndex);
 					break;
 				}
 			}
