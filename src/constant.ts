@@ -9,7 +9,9 @@ const enum Opcode {
 	JmpIf = 0x07,
 	Store = 0x08,
 	Load = 0x09,
-	Call = 0x0c,
+	Call = 0x0a,
+	Dependency = 0x0b,
+	Property = 0x0c,
 }
 
 export { Opcode };

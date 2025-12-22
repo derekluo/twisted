@@ -100,9 +100,31 @@ class VM {
 					break;
 				}
 				case Opcode.Call: {
-					const dependencyIndex = bytecode[this.pc + 1];
-					const argsLength = bytecode[this.pc + 2];
-					console.log("🤖 Calling dependency: %s", dependencyIndex);
+					const argsLength = bytecode[this.pc + 1];
+					var args = [];
+					for (let i = 0; i < argsLength; i++) {
+						args.push(this.stack.pop());
+					}
+					args.reverse();
+					const dependency = this.stack.pop();
+					console.log("🤖 Calling dependency: %s", dependency);
+					dependency(...args);
+					this.pc += 1;
+					break;
+				}
+				case Opcode.Dependency: {
+					const index = bytecode[this.pc + 1];
+					const dependency = this.dependencies[index];
+					console.log("🤖 Dependency index: %s, dependency: %s", index);
+					this.stack.push(dependency);
+					this.pc += 1;
+					break;
+				}
+				case Opcode.Property: {
+					const dependency = this.stack.pop();
+					const property = bytecode[this.pc + 1];
+					this.stack.push(dependency[property]);
+					this.pc += 1;
 					break;
 				}
 			}

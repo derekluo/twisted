@@ -110,7 +110,7 @@ class Compiler {
 				if (this.dependencies.includes(object.name)) {
 					console.log("🤖 Identifier fetch dependency %s", object.name);
 					const index = this.dependencies.indexOf(object.name);
-					const ir = createInstruction(Opcode.Push, [createArg(ArgKind.Dependency, index)]);
+					const ir = createInstruction(Opcode.Dependency, [createArg(ArgKind.Dependency, index)]);
 					this.pushIr(ir);
 				} else {
 					this.compileIdentifier(object as Identifier);
@@ -128,7 +128,7 @@ class Compiler {
 		switch (property.type) {
 			case "Identifier":
 				console.log("🤖 Compiling MemberExpression property: %s", property.name);
-				const ir = createInstruction(Opcode.Push, [createArg(ArgKind.Property, property.name)]);
+				const ir = createInstruction(Opcode.Property, [createArg(ArgKind.Property, property.name)]);
 				this.pushIr(ir);
 				break;
 			default:
