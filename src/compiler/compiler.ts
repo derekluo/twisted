@@ -1,41 +1,41 @@
-import { default as traverse } from "@babel/traverse";
 import * as parser from "@babel/parser";
-import type { NodePath, Visitor } from "@babel/traverse";
-import type { ParseResult } from "@babel/parser";
 
 import {
-	VariableDeclarator,
 	Identifier,
-	Function,
 	NumericLiteral,
 	BinaryExpression,
 	CallExpression,
-	LogicalExpression,
-	ThrowStatement,
 	MemberExpression,
 	Expression,
 	Program,
 	Statement,
+	VariableDeclarator,
+	VariableDeclaration,
 } from "@babel/types";
 import { Opcode } from "../constant.js";
 import { ArgKind, createArg, createInstruction, type Instruction } from "../instruction.js";
+import { Context } from "./context.js";
 
 class Compiler {
 	private program: Program;
 	public ir: Instruction[];
+	private context: Context;
 	private dependencies: string[];
+
 
 	constructor(source: string) {
 		this.program = parser.parse(source, { sourceType: "module" }).program;
 		this.ir = [];
+		this.context = new Context();
 		this.dependencies = ["window", "console"];
+
 	}
 
 	compile(): Instruction[] {
 		if (!this.program) {
 			throw new Error("Failed to parse program");
 		}
-		this.program.body.forEach(element => {
+		this.program.body.forEach((element) => {
 			this.compileStatement(element);
 		});
 		console.log("🤖 Compiled intermediate representation.");
@@ -47,6 +47,9 @@ class Compiler {
 			case "ExpressionStatement":
 				console.log("🤖 Compiling ExpressionStatement");
 				this.compileExpression(node.expression);
+				break;
+			case "VariableDeclaration":
+				this.compileVariableDeclaration(node as VariableDeclaration);
 				break;
 			default:
 				throw new Error(`Unsupported statement type: ${node.type}`);
@@ -71,6 +74,7 @@ class Compiler {
 			case "NumericLiteral":
 				this.compileNumericLiteral(node as NumericLiteral);
 				break;
+
 			default:
 				throw new Error(`Unsupported expression type: ${node.type}`);
 		}
@@ -90,15 +94,21 @@ class Compiler {
 			default:
 				throw new Error(`Unsupported callee type: ${node.callee.type}`);
 		}
-		node.arguments.forEach(argument => {
+		node.arguments.forEach((argument) => {
 			this.compileExpression(argument as Expression);
 		});
-		const ir = createInstruction(Opcode.Call, [createArg(ArgKind.ArgLength, node.arguments.length)]);
+		const ir = createInstruction(Opcode.Call, [
+			createArg(ArgKind.ArgLength, node.arguments.length),
+		]);
 		this.pushIr(ir);
 		console.log("🤖 Compiling CallExpression");
 	}
 
 	private compileIdentifier(node: Identifier) {
+		const result = this.context.resolve(node.name);
+		if (!result) {
+			console.error("🤖 Identifier %s not found", node.name);
+		}
 		console.log("🤖 Compiling Identifier name: %s", node.name);
 	}
 
@@ -110,7 +120,9 @@ class Compiler {
 				if (this.dependencies.includes(object.name)) {
 					console.log("🤖 Identifier fetch dependency %s", object.name);
 					const index = this.dependencies.indexOf(object.name);
-					const ir = createInstruction(Opcode.Dependency, [createArg(ArgKind.Dependency, index)]);
+					const ir = createInstruction(Opcode.Dependency, [
+						createArg(ArgKind.Dependency, index),
+					]);
 					this.pushIr(ir);
 				} else {
 					this.compileIdentifier(object as Identifier);
@@ -128,7 +140,9 @@ class Compiler {
 		switch (property.type) {
 			case "Identifier":
 				console.log("🤖 Compiling MemberExpression property: %s", property.name);
-				const ir = createInstruction(Opcode.Property, [createArg(ArgKind.Property, property.name)]);
+				const ir = createInstruction(Opcode.Property, [
+					createArg(ArgKind.Property, property.name),
+				]);
 				this.pushIr(ir);
 				break;
 			default:
@@ -158,6 +172,10 @@ class Compiler {
 			default:
 				throw new Error(`Unsupported operator: ${operator}`);
 		}
+	}
+
+	private compileVariableDeclaration(node: VariableDeclaration) {
+		console.log("🤖 Compiling VariableDeclaration");
 	}
 
 	private pushIr(instruction: Instruction) {

@@ -35,10 +35,7 @@ interface ControlFlowGraph {
 	blocks: Map<number, BasicBlock>;
 }
 
-function createInstruction(
-	opcode: Opcode,
-	args: Arg[] | null = null,
-): Instruction {
+function createInstruction(opcode: Opcode, args: Arg[] | null = null): Instruction {
 	return {
 		opcode,
 		args: args ?? [],
