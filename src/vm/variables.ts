@@ -13,9 +13,6 @@ class Variables {
 	}
 
 	public set(index: number, value: any) {
-		if (this.has(index)) {
-			throw new Error(`Variable index already declared for index: ${index}`);
-		}
 		this.variables.set(index, value);
 	}
 
