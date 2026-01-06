@@ -2,17 +2,14 @@ import Frame from "./frame/frame.js";
 
 class Context {
 	private frames: Frame[];
-	public frame: Frame
 
 	constructor() {
 		this.frames = [];
-		this.frame = new Frame();
-		this.frames.push(this.frame);
+		this.frames.push(new Frame());
 	}
 
 	public pushFrame(frame: Frame) {
 		this.frames.push(frame);
-		this.frame = frame;
 	}
 
 	public popFrame() {
@@ -20,7 +17,10 @@ class Context {
 			throw new Error("🤖 Cannot pop global frame");
 		}
 		this.frames.pop();
-		this.frame = this.frames[this.frames.length - 1];
+	}
+
+	public get frame(): Frame {
+		return this.frames[this.frames.length - 1];
 	}
 }
 

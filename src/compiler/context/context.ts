@@ -2,18 +2,15 @@ import Scope from "./scope.ts/scope.js";
 
 class Context {
     private scopes: Scope[]
-    public scope: Scope
 
     constructor() {
         this.scopes = [];
-        this.scope = new Scope();
-        this.scopes.push(this.scope);
+        this.scopes.push(new Scope());
     }
 
     public enter() {
         const scope = new Scope();
         this.scopes.push(scope);
-        this.scope = scope;
     }
 
     public exit() {
@@ -21,7 +18,10 @@ class Context {
             throw new Error("🤖 Cannot exit global scope");
         }
         this.scopes.pop();
-        this.scope = this.scopes[this.scopes.length - 1];
+    }
+
+    public get scope(): Scope {
+        return this.scopes[this.scopes.length - 1];
     }
 }
 
