@@ -22,6 +22,7 @@ class Context {
 	public get frame(): Frame {
 		return this.frames[this.frames.length - 1];
 	}
+
 }
 
 export default Context;
