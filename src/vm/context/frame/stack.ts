@@ -1,4 +1,3 @@
-
 class Stack {
 	private stack: any[];
 
@@ -9,7 +8,7 @@ class Stack {
 	public push(value: any): void {
 		this.stack.push(value);
 	}
-	
+
 	public pop(): any {
 		if (this.isEmpty()) {
 			throw new Error("🤖 Stack is empty");

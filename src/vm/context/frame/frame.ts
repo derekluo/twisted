@@ -1,7 +1,6 @@
 import Stack from "./stack.js";
 import Variables from "./variables.js";
 
-
 class Frame {
 	public stack: Stack;
 	public variables: Variables;
@@ -22,7 +21,6 @@ class Frame {
 			throw new Error(`Get parameter index out of bounds for index: ${index}`);
 		}
 	}
-
 }
 
 export default Frame;

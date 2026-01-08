@@ -19,6 +19,5 @@ class Variables {
 	public has(index: number): boolean {
 		return this.variables.has(index);
 	}
-
 }
 export default Variables;

@@ -16,8 +16,8 @@ const enum Opcode {
 }
 
 const enum LabelType {
-    IF_THEN = "IF_THEN",
-    IF_END = "IF_END",
+	IF_THEN = "IF_THEN",
+	IF_END = "IF_END",
 }
 
 export { Opcode, LabelType };

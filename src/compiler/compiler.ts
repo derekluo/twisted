@@ -24,7 +24,6 @@ class Compiler {
 	private context: Context;
 	private dependencies: string[];
 
-
 	constructor(source: string) {
 		this.program = parser.parse(source, { sourceType: "module" }).program;
 		this.ir = [];
@@ -71,7 +70,7 @@ class Compiler {
 
 	private compileIfStatement(node: IfStatement) {
 		this.compileExpression(node.test as Expression);
-		Opcode.JmpIf // if true jump to then, else jump to end
+		Opcode.JmpIf; // if true jump to then, else jump to end
 		if (node.alternate) {
 			this.compileStatement(node.alternate as Statement);
 		}
@@ -130,9 +129,7 @@ class Compiler {
 
 	private compileIdentifier(node: Identifier) {
 		const index = this.context.scope.resolve(node.name);
-		const ir = createInstruction(Opcode.Load, [
-			createArg(ArgKind.Variable, index),
-		]);
+		const ir = createInstruction(Opcode.Load, [createArg(ArgKind.Variable, index)]);
 		this.pushIr(ir);
 		console.log("🤖 Compiling Identifier name: %s, index: %s", node.name, index);
 	}
@@ -219,7 +216,7 @@ class Compiler {
 		if (!init) {
 			throw new Error("🤖 Variable declarator must have an initial value");
 		}
-		
+
 		switch (init.type) {
 			case "NumericLiteral":
 				this.compileNumericLiteral(init as NumericLiteral);
@@ -241,7 +238,7 @@ class Compiler {
 				this.pushIr(ir);
 				break;
 		}
-		
+
 		console.log("🤖 Compiling VariableDeclarator");
 	}
 
