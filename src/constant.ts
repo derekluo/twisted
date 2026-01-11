@@ -13,6 +13,7 @@ const enum Opcode {
 	Call = 0x0b,
 	Dependency = 0x0c,
 	Property = 0x0d,
+	DynAddr = 0x0e,
 }
 
 const enum LabelType {

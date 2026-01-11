@@ -1,20 +1,19 @@
 import { LabelType } from "../constant.js";
+import { Instruction } from "../instruction.js";
 
-class LabelManager {
-	private labels: Map<string, Label>;
-	private counter: number;
+class Bulldozer {
 
-	constructor() {
+	public name: string;
+	public labels: Map<string, Label>;
+
+	constructor(name: string) {
+		this.name = name;
 		this.labels = new Map();
-		this.counter = 0;
 	}
 
-	public createLabel(type: LabelType, position: number) {
-		const label = new Label(`LABEL_${type}_${this.counter}`,type, position);
-		this.labels.set(label.name, label);
-		this.counter++;
+	public backpatch(ir: Instruction[]) {
+		throw new Error("Not implemented");
 	}
-
 }
 
 class Label {

@@ -70,14 +70,18 @@ class Compiler {
 
 	private compileIfStatement(node: IfStatement) {
 		this.compileExpression(node.test as Expression);
-		Opcode.JmpIf; // if true jump to then, else jump to end
+		const thenLabel = undefined
+		const endLabel = undefined;
+		// jmp if true jump to then, else jump to end
+		this.pushIr(createInstruction(Opcode.JmpIf, [createArg(ArgKind.DynAddr, undefined)]));
 		if (node.alternate) {
 			this.compileStatement(node.alternate as Statement);
 		}
-		Opcode.Jmp; // jump to end
-		LabelType.IF_THEN;
+		// jmp to end
+		this.pushIr(createInstruction(Opcode.Jmp, [createArg(ArgKind.DynAddr, undefined)]));
 		this.compileStatement(node.consequent as Statement);
-		LabelType.IF_END;
+		// backpatch the then label
+		// backpatch the end label
 	}
 
 	private compileExpression(node: Expression) {
