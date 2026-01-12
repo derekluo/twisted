@@ -3,12 +3,30 @@ import { Instruction } from "../instruction.js";
 
 class Bulldozer {
 
-	public name: string;
-	public labels: Map<string, Label>;
+	private labels: Map<number, Label>;
+	private backpatchs: Map<number, number[]>;
+	private counter: number;
 
-	constructor(name: string) {
-		this.name = name;
+	constructor() {
 		this.labels = new Map();
+		this.backpatchs = new Map();
+		this.counter = 0;
+	}
+
+	public label(type: LabelType): number {
+		const id = this.counter;
+		this.labels.set(id, new Label(id, type, undefined));
+		this.counter++;
+		return id;
+	}
+
+	public remember(id: number, position: number) {
+		this.labels.get(id)!.position = position;
+		this.backpatchs.set(id, [position]);
+	}
+
+	public record(id: number, position: number) {
+		this.backpatchs.get(id)!.push(position);
 	}
 
 	public backpatch(ir: Instruction[]) {
@@ -18,14 +36,16 @@ class Bulldozer {
 
 class Label {
 
-	public readonly name: string;
-	public readonly type: LabelType;
-	public readonly position: number;
+	public id: number;
+	public type: LabelType;
+	public position: number | undefined;
 
-	constructor(name: string, type: LabelType, position: number) {
-		this.name = name;
-		this.type = type;
+	constructor(id: number, type: LabelType, position: number | undefined) {
+		this.id = id;
+		this.type = type
 		this.position = position;
 	}
 
 }
+
+export { Bulldozer, Label };

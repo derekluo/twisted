@@ -40,6 +40,8 @@ class Assembler {
 				case ArgKind.Variable:
 					this.bytecode.push(arg.value);
 					break;
+				case ArgKind.DynAddr:
+					throw new Error(`DynAddr arg kind: ${arg.kind}`);
 				default:
 					throw new Error(`Unknown arg kind: ${arg.kind}`);
 			}

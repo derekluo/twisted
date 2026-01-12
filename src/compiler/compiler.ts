@@ -17,18 +17,21 @@ import {
 import { LabelType, Opcode } from "../constant.js";
 import { ArgKind, createArg, createInstruction, type Instruction } from "../instruction.js";
 import Context from "./context/context.js";
+import { Bulldozer, Label } from "./bulldozer.js";
 
 class Compiler {
 	private program: Program;
 	public ir: Instruction[];
 	private context: Context;
 	private dependencies: string[];
+	private bulldozer: Bulldozer;
 
 	constructor(source: string) {
 		this.program = parser.parse(source, { sourceType: "module" }).program;
 		this.ir = [];
 		this.context = new Context();
 		this.dependencies = ["window", "console"];
+		this.bulldozer = new Bulldozer();
 	}
 
 	compile(): Instruction[] {
@@ -70,18 +73,26 @@ class Compiler {
 
 	private compileIfStatement(node: IfStatement) {
 		this.compileExpression(node.test as Expression);
-		const thenLabel = undefined
-		const endLabel = undefined;
-		// jmp if true jump to then, else jump to end
-		this.pushIr(createInstruction(Opcode.JmpIf, [createArg(ArgKind.DynAddr, undefined)]));
+		const L_THEN_ID = this.bulldozer.label(LabelType.IF_THEN);
+		const L_END_ID = this.bulldozer.label(LabelType.IF_END);
+
 		if (node.alternate) {
+			// jmp if true jump to then, else jump to end
+			this.bulldozer.remember(L_THEN_ID, this.ir.length);
+			this.pushIr(createInstruction(Opcode.JmpIf, [createArg(ArgKind.DynAddr, undefined)]));
 			this.compileStatement(node.alternate as Statement);
+			this.bulldozer.remember(L_END_ID, this.ir.length);
+			this.pushIr(createInstruction(Opcode.Jmp, [createArg(ArgKind.DynAddr, undefined)]));
+			this.bulldozer.record(L_THEN_ID, this.ir.length);
+			this.compileStatement(node.consequent as Statement);
+			this.bulldozer.record(L_END_ID, this.ir.length);
+		} else {
+			this.bulldozer.remember(L_THEN_ID, this.ir.length);
+			this.pushIr(createInstruction(Opcode.JmpIf, [createArg(ArgKind.DynAddr, undefined)]));
+			this.bulldozer.record(L_THEN_ID, this.ir.length);
+			this.compileStatement(node.consequent as Statement);
+			this.bulldozer.record(L_END_ID, this.ir.length);
 		}
-		// jmp to end
-		this.pushIr(createInstruction(Opcode.Jmp, [createArg(ArgKind.DynAddr, undefined)]));
-		this.compileStatement(node.consequent as Statement);
-		// backpatch the then label
-		// backpatch the end label
 	}
 
 	private compileExpression(node: Expression) {
