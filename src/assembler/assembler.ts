@@ -41,7 +41,8 @@ class Assembler {
 					this.bytecode.push(arg.value);
 					break;
 				case ArgKind.DynAddr:
-					throw new Error(`DynAddr arg kind: ${arg.kind}`);
+					this.bytecode.push(arg.value);
+					break;
 				default:
 					throw new Error(`Unknown arg kind: ${arg.kind}`);
 			}

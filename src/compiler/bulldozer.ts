@@ -1,5 +1,5 @@
 import { LabelType } from "../constant.js";
-import { Instruction } from "../instruction.js";
+import { ArgKind, Instruction } from "../instruction.js";
 
 class Bulldozer {
 
@@ -21,16 +21,40 @@ class Bulldozer {
 	}
 
 	public remember(id: number, position: number) {
-		this.labels.get(id)!.position = position;
-		this.backpatchs.set(id, [position]);
-	}
-
-	public record(id: number, position: number) {
+		if (!this.backpatchs.has(id)) {
+			this.backpatchs.set(id, []);
+		}
 		this.backpatchs.get(id)!.push(position);
 	}
 
+	public record(id: number, position: number) {
+		const label = this.labels.get(id);
+		if (!label) {
+			throw new Error(`Label ${id} not found`);
+		}
+		label.position = position;
+	}
+
 	public backpatch(ir: Instruction[]) {
-		throw new Error("Not implemented");
+		for (const [labelId, positions] of this.backpatchs) {
+			const label = this.labels.get(labelId);
+			if (!label) {
+				throw new Error(`Label ${labelId} not found`);
+			}
+			if (label.position === undefined) {
+				throw new Error(`Label ${labelId} position not recorded`);
+			}
+			
+			// 回填所有需要回填的位置
+			for (const pos of positions) {
+				const arg = ir[pos].args[0];
+				if (arg.kind === ArgKind.DynAddr && arg.value === undefined) {
+					arg.value = label.position;
+				} else {
+					throw new Error(`Invalid placeholder at position ${pos}`);
+				}
+			}
+		}
 	}
 }
 
