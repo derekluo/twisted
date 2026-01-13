@@ -15,7 +15,6 @@ class Assembler {
 			this.bulldozer.mark(index, this.bytecode.length);
 			this.push(instruction);
 		});
-		this.bulldozer.mark(ir.length, this.bytecode.length);
 		this.bulldozer.backpatch(this.bytecode, ir);
 		return this.bytecode;
 	}

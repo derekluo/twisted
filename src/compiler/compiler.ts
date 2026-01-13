@@ -42,6 +42,8 @@ class Compiler {
 			this.compileStatement(element);
 		});
 		console.log("🤖 Compiled intermediate representation.");
+		// add halt instruction
+		this.pushIr(createInstruction(Opcode.Halt, []));
 		this.bulldozer.backpatch(this.ir);
 		return this.ir;
 	}
