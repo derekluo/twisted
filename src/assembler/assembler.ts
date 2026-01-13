@@ -15,7 +15,8 @@ class Assembler {
 			this.bulldozer.mark(index, this.bytecode.length);
 			this.push(instruction);
 		});
-		this.bulldozer.backpatch(this.bytecode)
+		this.bulldozer.mark(ir.length, this.bytecode.length);
+		this.bulldozer.backpatch(this.bytecode, ir);
 		return this.bytecode;
 	}
 
@@ -47,9 +48,7 @@ class Assembler {
 					this.bytecode.push(arg.value);
 					break;
 				case ArgKind.DynAddr:
-					const dynAddrPos = this.bytecode.length;
 					this.bytecode.push(arg.value);
-					this.bulldozer.addPatch(dynAddrPos, arg.value);
 					break;
 				default:
 					throw new Error(`Unknown arg kind: ${arg.kind}`);
