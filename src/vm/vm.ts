@@ -1,5 +1,6 @@
 import { Opcode } from "../constant.js";
 import Context from "./context/context.js";
+import Frame from "./context/frame/frame.js";
 import BytecodeReader from "./reader.js";
 
 class VM {
@@ -123,6 +124,15 @@ class VM {
 				const dependency = this.context.frame.stack.pop();
 				const property = this.reader.read();
 				this.context.frame.stack.push(dependency[property]);
+				break;
+			}
+			case Opcode.PushFrame: {
+				this.context.pushFrame(new Frame(this.reader.getPc()));
+				break;
+			}
+			case Opcode.PopFrame: {
+				const frame = this.context.popFrame();
+				this.reader.jump(frame.getTracebackPc());
 				break;
 			}
 		}

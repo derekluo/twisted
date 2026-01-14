@@ -31,6 +31,10 @@ class BytecodeReader {
 	public hasNext(): boolean {
 		return this.pc < this.bytecode.length;
 	}
+
+	public getPc(): number {
+		return this.pc;
+	}
 }
 
 export default BytecodeReader;

@@ -7,11 +7,11 @@ class Frame {
 	private parameters: any[];
 	private tracebackPc?: number;
 
-	constructor() {
+	constructor(tracebackPc?: number) {
 		this.stack = new Stack();
 		this.variables = new Variables();
 		this.parameters = [];
-		this.tracebackPc = undefined;
+		this.tracebackPc = tracebackPc;
 	}
 
 	public getParameter(index: number): any {
@@ -20,6 +20,13 @@ class Frame {
 		} catch (error) {
 			throw new Error(`Get parameter index out of bounds for index: ${index}`);
 		}
+	}
+
+	public getTracebackPc(): number {
+		if (!this.tracebackPc) {
+			throw new Error("🤖 Traceback PC is not set");
+		}
+		return this.tracebackPc;
 	}
 }
 

@@ -12,11 +12,15 @@ class Context {
 		this.frames.push(frame);
 	}
 
-	public popFrame() {
+	public popFrame(): Frame {
 		if (this.frames.length <= 1) {
 			throw new Error("🤖 Cannot pop global frame");
 		}
-		this.frames.pop();
+		const frame = this.frames.pop();
+		if (!frame) {
+			throw new Error("🤖 Cannot pop frame");
+		}
+		return frame;
 	}
 
 	public get frame(): Frame {
