@@ -87,8 +87,27 @@ class Compiler {
 	private compileFunctionDeclaration(node: FunctionDeclaration) {
 		const id = node.id;
 		const body = node.body;
+
+		if (!id) {
+			throw new Error("🤖 Function declaration must have an id");
+		}
+
 		if (!body) {
 			throw new Error("🤖 Function declaration must have a body");
+		}
+
+		switch (id.type) {
+			case "Identifier":
+				this.context.hasFunction(id.name);
+				if (this.context.hasFunction(id.name)) {
+					throw new Error(`Function name already declared: ${id.name}`);
+				}
+				this.context.setFunction(id.name);
+				const index = this.context.getFunction(id.name);
+				console.log("🤖 Function name: %s, index: %s", id.name, index);
+				break;
+			default:
+				throw new Error(`Unsupported id type: ${id.type}`);
 		}
 		this.compileBlockStatement(body as BlockStatement);
 	}
@@ -146,6 +165,10 @@ class Compiler {
 	private compileCallExpression(node: CallExpression) {
 		switch (node.callee.type) {
 			case "Identifier":
+				if (this.context.hasFunction(node.callee.name)) {
+					console.log("🤖 Compiling CallExpression function: %s", node.callee.name);
+					break
+				}
 				this.compileIdentifier(node.callee as Identifier);
 				break;
 			case "MemberExpression":
