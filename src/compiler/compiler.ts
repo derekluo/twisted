@@ -193,6 +193,7 @@ class Compiler {
 				break;
 			case "MemberExpression":
 				this.compileMemberExpression(node.callee as MemberExpression);
+				this.compileExpression(node.callee.object as Expression);
 				const ir = createInstruction(Opcode.Apply, []);
 				this.pushIr(ir);
 				break;

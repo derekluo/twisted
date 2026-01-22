@@ -102,9 +102,9 @@ class VM {
 				break;
 			}
 			case Opcode.Apply: {
-				const array = this.context.frame.stack.pop();
-				// const _this = this.context.frame.stack.pop();
 				const _function = this.context.frame.stack.pop();
+				// const _this = this.context.frame.stack.pop();
+				const array = this.context.frame.stack.pop();
 				// const value = _function.apply(_this, array);
 				const value = _function(array);
 				this.context.frame.stack.push(value);
