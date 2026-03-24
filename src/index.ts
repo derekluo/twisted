@@ -36,6 +36,11 @@ function test1(a) {
 }
 console.log(test1(4))
 
+try {
+	console.log("test")
+} catch (error) {
+	console.error(error);
+}
     `;
 	const compiler = new Compiler(code);
 	const ir = compiler.compile();
@@ -48,6 +53,8 @@ console.log(test1(4))
 	const vm = new VM(bytecode, dependencies);
 	const result = vm.execute();
 	console.log(result);
+
+
 }
 
 

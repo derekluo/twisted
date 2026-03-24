@@ -16,6 +16,8 @@ import {
 	FunctionDeclaration,
 	ReturnStatement,
 	ArrayExpression,
+	TryStatement,
+	CatchClause,
 } from "@babel/types";
 import { LabelType, Opcode } from "../constant.js";
 import { ArgKind, createArg, createInstruction, type Instruction } from "../instruction.js";
@@ -72,6 +74,9 @@ class Compiler {
 			case "ReturnStatement":
 				this.compileReturnStatement(node as ReturnStatement);
 				break;
+			case "TryStatement":
+				this.compileTryStatement(node as TryStatement);
+				break;
 			default:
 				throw new Error(`Unsupported statement type: ${node.type}`);
 		}
@@ -112,8 +117,10 @@ class Compiler {
 			switch (param.type) {
 				case "Identifier":
 					this.context.scope.declare(param.name);
+					// 通过索引加载形参
 					const load_param_ir = createInstruction(Opcode.LoadParameter, [createArg(ArgKind.Number, index)]);
 					this.pushIr(load_param_ir);
+					// 将形参存储到变量表中
 					const ir = createInstruction(Opcode.Store, [
 						createArg(ArgKind.Variable, this.context.scope.resolve(param.name)),
 					]);
@@ -360,6 +367,22 @@ class Compiler {
 			default:
 				throw new Error(`Unsupported this object type: ${object.type}`);
 		}
+	}
+
+	private compileTryStatement(node: TryStatement) {
+		const block = node.block;
+		const handler = node.handler;
+		const finalizer = node.finalizer;
+		this.compileBlockStatement(block as BlockStatement);
+		this.compileCatchClause(handler as CatchClause);
+		this.compileBlockStatement(finalizer as BlockStatement);
+	}
+
+	private compileCatchClause(node: CatchClause) {
+		const param = node.param;
+		const body = node.body;
+		this.compileExpression(param as Expression);
+		this.compileBlockStatement(body as BlockStatement);
 	}
 }
 
