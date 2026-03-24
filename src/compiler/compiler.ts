@@ -192,8 +192,10 @@ class Compiler {
 				this.compileIdentifier(node.callee as Identifier);
 				break;
 			case "MemberExpression":
+				// this
+				this.compileThisObject(node.callee.object as Expression);
+				// func
 				this.compileMemberExpression(node.callee as MemberExpression);
-				this.compileExpression(node.callee.object as Expression);
 				const ir = createInstruction(Opcode.Apply, []);
 				this.pushIr(ir);
 				break;
@@ -231,7 +233,6 @@ class Compiler {
 				break;
 			case "MemberExpression":
 				this.compileMemberExpression(object as MemberExpression);
-
 				break;
 			case "CallExpression":
 				this.compileCallExpression(object as CallExpression);
@@ -334,6 +335,29 @@ class Compiler {
 			createArg(ArgKind.Number, args.length as number),
 		]);
 		this.pushIr(ir);
+	}
+
+	private compileThisObject(object: Expression) {
+		switch (object.type) {
+			case "Identifier":
+				if (this.dependencies.includes(object.name)) {
+					const index = this.dependencies.indexOf(object.name);
+					this.pushIr(createInstruction(Opcode.Dependency, [
+						createArg(ArgKind.Dependency, index),
+					]));
+				} else {
+					this.compileIdentifier(object as Identifier);
+				}
+				break;
+			case "MemberExpression":
+				this.compileMemberExpression(object as MemberExpression);
+				break;
+			case "CallExpression":
+				this.compileCallExpression(object as CallExpression);
+				break;
+			default:
+				throw new Error(`Unsupported this object type: ${object.type}`);
+		}
 	}
 }
 

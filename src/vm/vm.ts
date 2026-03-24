@@ -102,12 +102,11 @@ class VM {
 				break;
 			}
 			case Opcode.Apply: {
-				const _function = this.context.frame.stack.pop();
-				// const _this = this.context.frame.stack.pop();
-				const array = this.context.frame.stack.pop();
-				// const value = _function.apply(_this, array);
-				const value = _function(array);
-				this.context.frame.stack.push(value);
+				const _func = this.context.frame.stack.pop();
+				const _this = this.context.frame.stack.pop();
+				const _args = this.context.frame.stack.pop();
+				const _return = _func.apply(_this, _args);
+				this.context.frame.stack.push(_return);
 				break;
 			}
 			case Opcode.Dependency: {
@@ -121,6 +120,7 @@ class VM {
 				const dependency = this.context.frame.stack.pop();
 				const property = this.reader.read();
 				console.log("🤖 Property: %s", property);
+				// this.context.frame.stack.push(dependency);
 				this.context.frame.stack.push(dependency[property]);
 				break;
 			}

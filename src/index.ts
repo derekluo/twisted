@@ -13,18 +13,18 @@ function debugInstruction(ir: Instruction[]) {
 
 function main() {
 	const code = `
-const a = 123;
-// const b = a + 2;
-// const c = 1 + a + b;
-console.log(a);
+const a = 1;
+const b = a + 2;
+const c = 1 + a + b;
+console.log(a, b);
 
-// if (b == c) {
-//     const d = 3;
-//     window.console.log(d);
-// } else {
-// 	const e = 4;
-// 	window.console.log(e);
-// }
+if (b == c) {
+    const d = 3;
+    window.console.log(d);
+} else {
+	const e = 4;
+	window.console.log(e);
+}
 
 // function test(a) {
 // 	window.console.log(a);
