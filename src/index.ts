@@ -32,7 +32,7 @@ function test(a) {
 test(123456789)
 
 try {
-	console.log(1);
+	console.log(2);
 } catch (error) {
 	console.error(error);
 }

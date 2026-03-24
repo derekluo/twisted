@@ -398,12 +398,18 @@ class Compiler {
 	}
 
 	private compileCatchClause(node: CatchClause) {
-		console.log("🤖 Compiling CatchClause");
-		const param = node.param;
-		const body = node.body;
+		// catch 作用域
 		this.pushIr(createInstruction(Opcode.PushFrame));
-		this.compileExpression(param as Expression);
-		this.compileBlockStatement(body as BlockStatement);
+		this.context.enter();
+		if (node.param && node.param.type === "Identifier") {
+			this.context.scope.declare(node.param.name);
+			// 约定：VM 跳入 catch 时，异常值在栈顶
+			this.pushIr(createInstruction(Opcode.Store, [
+				createArg(ArgKind.Variable, this.context.scope.resolve(node.param.name)),
+			]));
+		}
+		this.compileBlockStatement(node.body as BlockStatement);
+		this.context.exit();
 		this.pushIr(createInstruction(Opcode.PopFrame));
 	}
 }
