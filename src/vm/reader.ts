@@ -35,6 +35,10 @@ class BytecodeReader {
 	public getPc(): number {
 		return this.pc;
 	}
+
+	public length(): number {
+		return this.bytecode.length;
+	}
 }
 
 export default BytecodeReader;

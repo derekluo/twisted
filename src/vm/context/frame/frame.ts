@@ -7,10 +7,10 @@ class Frame {
 	private parameters: any[];
 	private tracebackPc?: number;
 
-	constructor(tracebackPc?: number) {
+	constructor(tracebackPc?: number, parameters?: any[]) {
 		this.stack = new Stack();
 		this.variables = new Variables();
-		this.parameters = [];
+		this.parameters = parameters || [];
 		this.tracebackPc = tracebackPc;
 	}
 

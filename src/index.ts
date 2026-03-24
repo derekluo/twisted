@@ -26,11 +26,16 @@ if (b == c) {
 	window.console.log(e);
 }
 
-// function test(a) {
-// 	window.console.log(a);
-// 	return a
-// }
-// window.console.log(test(123456789));
+function test(a) {
+	window.console.log(a);
+}
+test(123456789)
+
+function test1(a) {
+	return a + 1;
+}
+console.log(test1(2))
+
     `;
 	const compiler = new Compiler(code);
 	const ir = compiler.compile();

@@ -125,8 +125,12 @@ class VM {
 				break;
 			}
 			case Opcode.PushFrame: {
+				const args = this.context.frame.stack.pop();
 				const pc = this.reader.getPc();
-				const frame = new Frame(pc);
+				const frame = new Frame(pc, args);
+				for (let i = args.length - 1; i >= 0; i--) {
+					frame.stack.push(args[i]);
+				}
 				this.context.pushFrame(frame);
 				break;
 			}
