@@ -19,6 +19,7 @@ const enum Opcode {
 	BuildArray = 0x11,
 	BuildObject = 0x12,
 	LoadParameter = 0x13,
+	Await = 0x14,
 }
 
 const OPCODE_NAMES: Record<number, string> = {
@@ -42,6 +43,7 @@ const OPCODE_NAMES: Record<number, string> = {
 	[Opcode.BuildArray]: "BuildArray",
 	[Opcode.BuildObject]: "BuildObject",
 	[Opcode.LoadParameter]: "LoadParameter",
+	[Opcode.Await]: "Await",
 };
 
 const enum LabelType {

@@ -1,4 +1,3 @@
-import { tsConstructSignatureDeclaration } from "@babel/types";
 import { Opcode } from "../constant.js";
 import Context from "./context/context.js";
 import Frame from "./context/frame/frame.js";
@@ -15,15 +14,15 @@ class VM {
 		this.dependencies = dependencies;
 	}
 
-	public execute() {
+	public async execute() {
 		while (this.reader.hasNext()) {
 			const opcode = this.reader.read();
-			this._execute(opcode);
+			await this._execute(opcode);
 		}
 		return this.context.frame.stack.peek();
 	}
 
-	private _execute(opcode: Opcode) {
+	private async _execute(opcode: Opcode) {
 		switch (opcode) {
 			case Opcode.Push:
 				this.context.frame.stack.push(this.reader.read());
@@ -106,7 +105,13 @@ class VM {
 				const _this = this.context.frame.stack.pop();
 				const _args = this.context.frame.stack.pop();
 				const _return = _func.apply(_this, _args);
-				this.context.frame.stack.push(_return);
+				this.context.frame.stack.push(Promise.resolve(_return));
+				break;
+			}
+			case Opcode.Await: {
+				const value = this.context.frame.stack.pop();
+				const awaited = await Promise.resolve(value);
+				this.context.frame.stack.push(awaited);
 				break;
 			}
 			case Opcode.Dependency: {
@@ -153,6 +158,8 @@ class VM {
 				this.context.frame.stack.push(parameter);
 				break;
 			}
+			case Opcode.Halt:
+				break;
 		}
 	}
 }

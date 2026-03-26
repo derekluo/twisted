@@ -11,7 +11,7 @@ function debugInstruction(ir: Instruction[]) {
 	});
 }
 
-function main() {
+async function main() {
 	const code = `
 const a = 1;
 const b = a + 2;
@@ -26,10 +26,10 @@ if (b == c) {
 	window.console.log(e);
 }
 
-function test(a) {
+async function test(a) {
 	window.console.log(a);
 }
-test(123456789)
+await test(123456789)
 
 try {
 	console.log(2);
@@ -46,8 +46,8 @@ try {
 	const dom = new JSDOM();
 	const dependencies = [dom.window, dom.window.console];
 	const vm = new VM(bytecode, dependencies);
-	const result = vm.execute();
+	const result = await vm.execute();
 	console.log(result);
 }
 
-main();
+void main();

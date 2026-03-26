@@ -5,6 +5,7 @@ import {
 	NumericLiteral,
 	BinaryExpression,
 	CallExpression,
+	AwaitExpression,
 	MemberExpression,
 	Expression,
 	Program,
@@ -173,6 +174,9 @@ class Compiler {
 			case "CallExpression":
 				this.compileCallExpression(node as CallExpression);
 				break;
+			case "AwaitExpression":
+				this.compileAwaitExpression(node as AwaitExpression);
+				break;
 			case "BinaryExpression":
 				console.log("🤖 Compiling BinaryExpression");
 				this.compileBinaryExpression(node as BinaryExpression);
@@ -189,6 +193,12 @@ class Compiler {
 			default:
 				throw new Error(`Unsupported expression type: ${node.type}`);
 		}
+	}
+
+	private compileAwaitExpression(node: AwaitExpression) {
+		this.compileExpression(node.argument as Expression);
+		this.pushIr(createInstruction(Opcode.Await));
+		console.log("🤖 Compiling AwaitExpression");
 	}
 
 	private compileCallExpression(node: CallExpression) {
@@ -318,16 +328,7 @@ class Compiler {
 			throw new Error("🤖 Variable declarator must have an initial value");
 		}
 
-		switch (init.type) {
-			case "NumericLiteral":
-				this.compileNumericLiteral(init as NumericLiteral);
-				break;
-			case "BinaryExpression":
-				this.compileBinaryExpression(init as BinaryExpression);
-				break;
-			default:
-				throw new Error(`Unsupported init type: ${init.type}`);
-		}
+		this.compileExpression(init as Expression);
 
 		switch (id.type) {
 			case "Identifier":
