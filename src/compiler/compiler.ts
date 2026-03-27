@@ -460,42 +460,101 @@ class Compiler {
 	}
 
 	private compileAssignmentExpression(node: AssignmentExpression) {
-		if (node.left.type !== "Identifier") {
-			throw new Error(`Unsupported assignment target type: ${node.left.type}`);
-		}
+		switch (node.left.type) {
+			case "Identifier": {
+				const variableName = node.left.name;
+				const variableIndex = this.context.scope.resolve(variableName);
 
-		const variableName = node.left.name;
-		const variableIndex = this.context.scope.resolve(variableName);
+				switch (node.operator) {
+					case "=":
+						this.compileExpression(node.right as Expression);
+						this.pushIr(
+							createInstruction(Opcode.Store, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						this.pushIr(
+							createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						break;
+					case "+=":
+						this.pushIr(
+							createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						this.compileExpression(node.right as Expression);
+						this.pushIr(createInstruction(Opcode.Add));
+						this.pushIr(
+							createInstruction(Opcode.Store, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						this.pushIr(
+							createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						break;
+					case "-=":
+						this.pushIr(
+							createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						this.compileExpression(node.right as Expression);
+						this.pushIr(createInstruction(Opcode.Sub));
+						this.pushIr(
+							createInstruction(Opcode.Store, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						this.pushIr(
+							createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						break;
+					case "^=":
+						this.pushIr(
+							createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						this.compileExpression(node.right as Expression);
+						this.pushIr(createInstruction(Opcode.BitXor));
+						this.pushIr(
+							createInstruction(Opcode.Store, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						this.pushIr(
+							createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]),
+						);
+						break;
+					default:
+						throw new Error(`Unsupported assignment operator: ${node.operator}`);
+				}
+				break;
+			}
+			case "MemberExpression": {
+				if (node.operator !== "=") {
+					throw new Error(`Unsupported assignment operator for member target: ${node.operator}`);
+				}
 
-		switch (node.operator) {
-			case "=":
+				const memberNode = node.left as MemberExpression;
+				this.compileThisObject(memberNode.object as Expression);
 				this.compileExpression(node.right as Expression);
-				this.pushIr(createInstruction(Opcode.Store, [createArg(ArgKind.Variable, variableIndex)]));
-				this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]));
+
+				if (memberNode.property.type === "Identifier" && !memberNode.computed) {
+					this.pushIr(
+						createInstruction(Opcode.SetProperty, [
+							createArg(ArgKind.Property, memberNode.property.name),
+						]),
+					);
+				} else if (memberNode.property.type === "StringLiteral") {
+					this.pushIr(
+						createInstruction(Opcode.SetProperty, [
+							createArg(ArgKind.Property, memberNode.property.value),
+						]),
+					);
+				} else if (memberNode.property.type === "NumericLiteral") {
+					this.pushIr(
+						createInstruction(Opcode.SetProperty, [
+							createArg(ArgKind.Property, String(memberNode.property.value)),
+						]),
+					);
+				} else {
+					throw new Error(
+						`Unsupported member assignment property type: ${memberNode.property.type}`,
+					);
+				}
 				break;
-			case "+=":
-				this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]));
-				this.compileExpression(node.right as Expression);
-				this.pushIr(createInstruction(Opcode.Add));
-				this.pushIr(createInstruction(Opcode.Store, [createArg(ArgKind.Variable, variableIndex)]));
-				this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]));
-				break;
-			case "-=":
-				this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]));
-				this.compileExpression(node.right as Expression);
-				this.pushIr(createInstruction(Opcode.Sub));
-				this.pushIr(createInstruction(Opcode.Store, [createArg(ArgKind.Variable, variableIndex)]));
-				this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]));
-				break;
-			case "^=":
-				this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]));
-				this.compileExpression(node.right as Expression);
-				this.pushIr(createInstruction(Opcode.BitXor));
-				this.pushIr(createInstruction(Opcode.Store, [createArg(ArgKind.Variable, variableIndex)]));
-				this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, variableIndex)]));
-				break;
+			}
 			default:
-				throw new Error(`Unsupported assignment operator: ${node.operator}`);
+				throw new Error(`Unsupported assignment target type: ${node.left.type}`);
 		}
 	}
 

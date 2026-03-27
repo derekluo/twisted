@@ -21,4 +21,26 @@ function fallbackHash(str) {
   }
   return ("00000000" + h.toString(16)).slice(-8);
 }
+
+// function hookFetch() {
+//     const nativeFetch = window.fetch;
+//     window.fetch = function(url, options) {
+//         let headers = options.headers;
+//         if (headers) {
+//             headers["X-Twisted-FP"] = fallbackHash(payload);
+//         } else {
+//             headers = {
+//                 "X-Twisted-FP": fallbackHash(payload),
+//             }
+//         }
+//         options.headers = headers;
+//         return nativeFetch(url, options);
+//     }
+// }
+
 window.JSON.stringify({ fingerprint, hash: "0x" + fallbackHash(payload) })
+
+
+// const ob = {a: 1, b: 2, c: 3};
+// ob.a = 10;
+// window.JSON.stringify(ob);
