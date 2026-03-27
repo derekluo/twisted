@@ -37,6 +37,8 @@ class VM {
 				const b = this.context.frame.stack.pop();
 				if (typeof a === "number" && typeof b === "number") {
 					this.context.frame.stack.push(a + b);
+				} else if (typeof a === "string" || typeof b === "string") {
+					this.context.frame.stack.push(String(b) + String(a));
 				} else {
 					throw new Error("Invalid operands for Add");
 				}
