@@ -351,16 +351,26 @@ class Compiler {
 			default:
 				throw new Error(`Unsupported object type: ${object.type}`);
 		}
-		switch (property.type) {
-			case "Identifier":
-				console.log("🤖 Compiling MemberExpression property: %s", property.name);
-				const ir = createInstruction(Opcode.Property, [
-					createArg(ArgKind.Property, property.name),
-				]);
-				this.pushIr(ir);
-				break;
-			default:
-				throw new Error(`Unsupported property type: ${property.type}`);
+		if (!node.computed && property.type === "Identifier") {
+			const ir = createInstruction(Opcode.Property, [
+				createArg(ArgKind.Property, property.name),
+			]);
+			this.pushIr(ir);
+			console.log("🤖 Compiling MemberExpression property: %s", property.name);
+		} else if (node.computed && property.type === "StringLiteral") {
+			const ir = createInstruction(Opcode.Property, [
+				createArg(ArgKind.Property, property.value),
+			]);
+			this.pushIr(ir);
+			console.log("🤖 Compiling MemberExpression property: %s", property.value);
+		} else if (node.computed && property.type === "NumericLiteral") {
+			const ir = createInstruction(Opcode.Property, [
+				createArg(ArgKind.Property, String(property.value)),
+			]);
+			this.pushIr(ir);
+			console.log("🤖 Compiling MemberExpression property: %s", String(property.value));
+		} else {
+			throw new Error(`Unsupported property type: ${property.type}`);
 		}
 		console.log("🤖 Compiling MemberExpression");
 	}

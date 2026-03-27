@@ -30,3 +30,9 @@ function getToken() {
 
 
 window.JSON.stringify({ fingerprint: getFingerprint(), token: getToken() })
+
+const obj = { a: 1, nested: { v: 0 } };
+obj.a = 42;
+obj["b"] = 7;
+obj.nested.v = obj.a + obj["b"];
+window.JSON.stringify(obj)
