@@ -27,6 +27,7 @@ const enum Opcode {
 	ShiftRightUnsigned = 0x19,
 	LessThan = 0x1a,
 	BitXor = 0x1b,
+	SetProperty = 0x1c,
 }
 
 const OPCODE_NAMES: Record<number, string> = {
@@ -58,6 +59,7 @@ const OPCODE_NAMES: Record<number, string> = {
 	[Opcode.ShiftRightUnsigned]: "ShiftRightUnsigned",
 	[Opcode.LessThan]: "LessThan",
 	[Opcode.BitXor]: "BitXor",
+	[Opcode.SetProperty]: "SetProperty",
 };
 
 const enum LabelType {

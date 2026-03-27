@@ -192,6 +192,15 @@ class VM {
 				this.context.frame.stack.push(dependency[property]);
 				break;
 			}
+			case Opcode.SetProperty: {
+				const value = this.context.frame.stack.pop();
+				const object = this.context.frame.stack.pop();
+				const propertyIndex = this.reader.read();
+				const property = this.meta[propertyIndex];
+				object[property] = value;
+				this.context.frame.stack.push(value);
+				break;
+			}
 			case Opcode.PushFrame: {
 				const args = this.context.frame.stack.pop();
 				const pc = this.reader.getPc();
