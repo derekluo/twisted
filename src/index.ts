@@ -26,13 +26,15 @@ if (b == c) {
 	window.console.log(e);
 }
 
-async function test(a) {
-	window.console.log(a);
+async function test() {
+	const dt = new window.Date();
+	return dt.getUTCFullYear();
 }
-await test(123456789)
+
+console.log(await test())
 
 try {
-	console.log(2);
+	console.log(10);
 } catch (error) {
 	console.error(error);
 }

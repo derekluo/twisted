@@ -5,6 +5,7 @@ import {
 	NumericLiteral,
 	BinaryExpression,
 	CallExpression,
+	NewExpression,
 	AwaitExpression,
 	MemberExpression,
 	Expression,
@@ -174,6 +175,9 @@ class Compiler {
 			case "CallExpression":
 				this.compileCallExpression(node as CallExpression);
 				break;
+			case "NewExpression":
+				this.compileNewExpression(node as NewExpression);
+				break;
 			case "AwaitExpression":
 				this.compileAwaitExpression(node as AwaitExpression);
 				break;
@@ -236,6 +240,14 @@ class Compiler {
 				throw new Error(`Unsupported callee type: ${node.callee.type}`);
 		}
 		console.log("🤖 Compiling CallExpression");
+	}
+
+	private compileNewExpression(node: NewExpression) {
+		const args = (node.arguments ?? []) as ArrayExpression["elements"];
+		this.buildArrayVariable(args);
+		this.compileConstructCallee(node.callee as Expression);
+		this.pushIr(createInstruction(Opcode.Construct, []));
+		console.log("🤖 Compiling NewExpression");
 	}
 
 	private compileIdentifier(node: Identifier) {
@@ -380,6 +392,31 @@ class Compiler {
 				break;
 			default:
 				throw new Error(`Unsupported this object type: ${object.type}`);
+		}
+	}
+
+	private compileConstructCallee(callee: Expression) {
+		switch (callee.type) {
+			case "Identifier":
+				if (this.dependencies.includes(callee.name)) {
+					const index = this.dependencies.indexOf(callee.name);
+					this.pushIr(
+						createInstruction(Opcode.Dependency, [
+							createArg(ArgKind.Dependency, index),
+						]),
+					);
+				} else {
+					this.compileIdentifier(callee as Identifier);
+				}
+				break;
+			case "MemberExpression":
+				this.compileMemberExpression(callee as MemberExpression);
+				break;
+			case "CallExpression":
+				this.compileCallExpression(callee as CallExpression);
+				break;
+			default:
+				throw new Error(`Unsupported constructor callee type: ${callee.type}`);
 		}
 	}
 

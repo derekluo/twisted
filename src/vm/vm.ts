@@ -114,6 +114,13 @@ class VM {
 				this.context.frame.stack.push(awaited);
 				break;
 			}
+			case Opcode.Construct: {
+				const _ctor = this.context.frame.stack.pop();
+				const _args = this.context.frame.stack.pop();
+				const _instance = Reflect.construct(_ctor as Function, _args as unknown[]);
+				this.context.frame.stack.push(_instance);
+				break;
+			}
 			case Opcode.Dependency: {
 				const index = this.reader.read();
 				const dependency = this.dependencies[index];
