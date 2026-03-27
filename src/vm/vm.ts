@@ -7,11 +7,13 @@ class VM {
 	private context: Context;
 	private reader: BytecodeReader;
 	private dependencies: object[];
+	private meta: string[];
 
-	constructor(bytecode: number[], dependencies: object[]) {
+	constructor(bytecode: number[], dependencies: object[], meta: string[] = []) {
 		this.context = new Context();
 		this.reader = new BytecodeReader(bytecode);
 		this.dependencies = dependencies;
+		this.meta = meta;
 	}
 
 	public async execute() {
@@ -100,6 +102,12 @@ class VM {
 				this.context.frame.stack.push(value);
 				break;
 			}
+			case Opcode.LoadMeta: {
+				const index = this.reader.read();
+				const value = this.meta[index];
+				this.context.frame.stack.push(value);
+				break;
+			}
 			case Opcode.Apply: {
 				const _func = this.context.frame.stack.pop();
 				const _this = this.context.frame.stack.pop();
@@ -130,7 +138,8 @@ class VM {
 			}
 			case Opcode.Property: {
 				const dependency = this.context.frame.stack.pop();
-				const property = this.reader.read();
+				const propertyIndex = this.reader.read();
+				const property = this.meta[propertyIndex];
 				console.log("🤖 Property: %s", property);
 				this.context.frame.stack.push(dependency[property]);
 				break;

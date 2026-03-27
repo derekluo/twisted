@@ -43,18 +43,19 @@ try {
 const t_b = true;
 console.log(t_b)
 
-const t_s = "hello";
+const t_s = "Hello World!";
 console.log(t_s)
     `;
 	const compiler = new Compiler(code);
 	const ir = compiler.compile();
 	const assembler = new Assembler();
-	const bytecode = assembler.assemble(ir);
+	const bundle = assembler.assemble(ir);
 	debugInstruction(ir);
-	console.dir(bytecode, { depth: null });
+	console.dir(bundle.meta, { depth: null });
+	console.dir(bundle.bytecode, { depth: null });
 	const dom = new JSDOM();
 	const dependencies = [dom.window, dom.window.console];
-	const vm = new VM(bytecode, dependencies);
+	const vm = new VM(bundle.bytecode, dependencies, bundle.meta);
 	const result = await vm.execute();
 	console.log(result);
 }

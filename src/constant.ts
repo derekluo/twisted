@@ -21,6 +21,7 @@ const enum Opcode {
 	LoadParameter = 0x13,
 	Await = 0x14,
 	Construct = 0x15,
+	LoadMeta = 0x16,
 }
 
 const OPCODE_NAMES: Record<number, string> = {
@@ -46,6 +47,7 @@ const OPCODE_NAMES: Record<number, string> = {
 	[Opcode.LoadParameter]: "LoadParameter",
 	[Opcode.Await]: "Await",
 	[Opcode.Construct]: "Construct",
+	[Opcode.LoadMeta]: "LoadMeta",
 };
 
 const enum LabelType {
