@@ -105,7 +105,7 @@ class VM {
 				const _this = this.context.frame.stack.pop();
 				const _args = this.context.frame.stack.pop();
 				const _return = _func.apply(_this, _args);
-				this.context.frame.stack.push(Promise.resolve(_return));
+				this.context.frame.stack.push(_return);
 				break;
 			}
 			case Opcode.Await: {
@@ -125,7 +125,6 @@ class VM {
 				const dependency = this.context.frame.stack.pop();
 				const property = this.reader.read();
 				console.log("🤖 Property: %s", property);
-				// this.context.frame.stack.push(dependency);
 				this.context.frame.stack.push(dependency[property]);
 				break;
 			}
