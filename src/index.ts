@@ -31,6 +31,7 @@ async function test() {
 	return dt.getUTCFullYear();
 }
 
+
 console.log(await test())
 
 try {
@@ -38,6 +39,12 @@ try {
 } catch (error) {
 	console.error(error);
 }
+
+const t_b = true;
+console.log(t_b)
+
+const t_s = "hello";
+console.log(t_s)
     `;
 	const compiler = new Compiler(code);
 	const ir = compiler.compile();

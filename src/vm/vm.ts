@@ -158,6 +158,18 @@ class VM {
 				this.context.frame.stack.push(array);
 				break;
 			}
+			case Opcode.BuildObject: {
+				const length = this.reader.read();
+				console.log("🤖 BuildObject: %s", length);
+				const object: Record<string, unknown> = {};
+				for (let i = 0; i < length; i++) {
+					const value = this.context.frame.stack.pop();
+					const key = this.context.frame.stack.pop();
+					object[key] = value;
+				}
+				this.context.frame.stack.push(object);
+				break;
+			}
 			case Opcode.LoadParameter: {
 				const index = this.reader.read();
 				const parameter = this.context.frame.getParameter(index);

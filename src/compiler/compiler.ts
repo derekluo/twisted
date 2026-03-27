@@ -3,11 +3,15 @@ import * as parser from "@babel/parser";
 import {
 	Identifier,
 	NumericLiteral,
+	StringLiteral,
+	BooleanLiteral,
 	BinaryExpression,
 	CallExpression,
 	NewExpression,
 	AwaitExpression,
 	MemberExpression,
+	ObjectExpression,
+	ObjectProperty,
 	Expression,
 	Program,
 	Statement,
@@ -194,6 +198,15 @@ class Compiler {
 			case "NumericLiteral":
 				this.compileNumericLiteral(node as NumericLiteral);
 				break;
+			case "StringLiteral":
+				this.compileStringLiteral(node as StringLiteral);
+				break;
+			case "BooleanLiteral":
+				this.compileBooleanLiteral(node as BooleanLiteral);
+				break;
+			case "ObjectExpression":
+				this.compileObjectExpression(node as ObjectExpression);
+				break;
 			default:
 				throw new Error(`Unsupported expression type: ${node.type}`);
 		}
@@ -299,6 +312,50 @@ class Compiler {
 	private compileNumericLiteral(node: NumericLiteral) {
 		this.pushIr(createInstruction(Opcode.Push, [createArg(ArgKind.Number, node.value)]));
 		console.log("🤖 Compiling NumericLiteral");
+	}
+
+	private compileStringLiteral(node: StringLiteral) {
+		this.pushIr(createInstruction(Opcode.Push, [createArg(ArgKind.String, node.value)]));
+		console.log("🤖 Compiling StringLiteral");
+	}
+
+	private compileBooleanLiteral(node: BooleanLiteral) {
+		this.pushIr(createInstruction(Opcode.Push, [createArg(ArgKind.Number, node.value)]));
+		console.log("🤖 Compiling BooleanLiteral");
+	}
+
+	private compileObjectExpression(node: ObjectExpression) {
+		node.properties.forEach((property) => {
+			if (property.type !== "ObjectProperty") {
+				throw new Error(`Unsupported object property type: ${property.type}`);
+			}
+
+			const objectProperty = property as ObjectProperty;
+			if (objectProperty.computed) {
+				throw new Error("Unsupported computed object property");
+			}
+
+			if (objectProperty.key.type === "Identifier") {
+				this.pushIr(
+					createInstruction(Opcode.Push, [createArg(ArgKind.String, objectProperty.key.name)]),
+				);
+			} else if (objectProperty.key.type === "StringLiteral") {
+				this.pushIr(
+					createInstruction(Opcode.Push, [createArg(ArgKind.String, objectProperty.key.value)]),
+				);
+			} else {
+				throw new Error(`Unsupported object key type: ${objectProperty.key.type}`);
+			}
+
+			this.compileExpression(objectProperty.value as Expression);
+		});
+
+		this.pushIr(
+			createInstruction(Opcode.BuildObject, [
+				createArg(ArgKind.Number, node.properties.length),
+			]),
+		);
+		console.log("🤖 Compiling ObjectExpression");
 	}
 
 	private compileBinaryExpression(node: BinaryExpression) {
