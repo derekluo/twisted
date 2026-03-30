@@ -34,6 +34,8 @@ const enum Opcode {
 	LoadCapture = 0x20,
 	InvokeValue  = 0x21,
 	Not = 0x22,
+	/** 栈上压入 JavaScript null */
+	PushNull = 0x23,
 }
 
 const OPCODE_NAMES: Record<number, string> = {
@@ -72,6 +74,7 @@ const OPCODE_NAMES: Record<number, string> = {
 	[Opcode.LoadCapture]: "LoadCapture",
 	[Opcode.InvokeValue]:  "InvokeValue",
 	[Opcode.Not]: "Not",
+	[Opcode.PushNull]: "PushNull",
 };
 
 const enum LabelType {

@@ -27,6 +27,7 @@ import {
 	FunctionExpression,
 	ReturnStatement,
 	ArrayExpression,
+	NullLiteral,
 	TryStatement,
 	CatchClause,
 } from "@babel/types";
@@ -320,6 +321,9 @@ class Compiler {
 				break;
 			case "ArrayExpression":
 				this.compileArrayExpression(node as ArrayExpression);
+				break;
+			case "NullLiteral":
+				this.compileNullLiteral(node as NullLiteral);
 				break;
 			default:
 				throw new Error(`Unsupported expression type: ${node.type}`);
@@ -716,6 +720,11 @@ class Compiler {
 
 	private pushIr(instruction: Instruction) {
 		this.ir.push(instruction);
+	}
+
+	private compileNullLiteral(_node: NullLiteral) {
+		this.pushIr(createInstruction(Opcode.PushNull, []));
+		console.log("🤖 Compiling NullLiteral");
 	}
 
 	private compileArrayExpression(node: ArrayExpression) {

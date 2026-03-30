@@ -73,6 +73,9 @@ class VM {
 			case Opcode.Push:
 				this.context.frame.stack.push(this.reader.read());
 				break;
+			case Opcode.PushNull:
+				this.context.frame.stack.push(null);
+				break;
 			case Opcode.Pop:
 				this.context.frame.stack.pop();
 				break;
