@@ -22,17 +22,41 @@ function getFingerprint() {
     };
 }
 
-function getToken() {
-    const fingerprint = getFingerprint();
-    const payload = window.JSON.stringify(fingerprint);
-    return fallbackHash(payload);
+
+async function getHashValue(str) {
+  const encoder = new window.TextEncoder();
+  const data = encoder.encode(str);
+  const hash = await window.crypto.subtle.digest("SHA-256", data);
+  const hashArray = window.Array.from(new window.Uint8Array(hash));
+  let hashHex = ''
+  for (let i = 0; i < hashArray.length; i++) {
+    const byte = hashArray[i];
+    hashHex += byte.toString(16).padStart(2, "0");
+  }
+  return hashHex;
 }
+// function hookFetch() {
+//     const nativeFetch = window.fetch;
+//     window.fetch = function(url, options) {
+//         let headers = options.headers;
+//         if (headers) {
+//             headers["X-Twisted-FP"] = fallbackHash(payload);
+//         } else {
+//             headers = {
+//                 "X-Twisted-FP": fallbackHash(payload),
+//             }
+//         }
+//         options.headers = headers;
+//         return nativeFetch(url, options);
+//     }
+// }
 
 
-window.JSON.stringify({ fingerprint: getFingerprint(), token: getToken() })
+const response = await window.fetch("http://127.0.0.1:5500/");
 
-const obj = { a: 1, nested: { v: 0 } };
-obj.a = 42;
-obj["b"] = 7;
-obj.nested.v = obj.a + obj["b"];
-window.JSON.stringify(obj)
+window.JSON.stringify({ fingerprint, hash: "0x" + await getHashValue(payload) })
+
+
+// const ob = {a: 1, b: 2, c: 3};
+// ob.a = 10;
+// window.JSON.stringify(ob);
