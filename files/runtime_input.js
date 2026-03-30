@@ -127,16 +127,14 @@ function getFontFingerprint() {
     return hit;
 }
 
-/**
- * 网络特征（浏览器无法做 TCP 栈指纹；用 Network Information API 作近似）
- */
 function getNetFingerprint() {
     const c = window.navigator.connection;
+    // undefined：未实现 API；null：规范允许；!c 一并处理（勿只写 ===null 或 ===undefined）
     if (c) {
-        const et = c.effectiveType;
-        const dl = c.downlink;
-        const rtt = c.rtt;
-        return et + "|" + dl + "|" + rtt;
+      const et = c.effectiveType;
+      const dl = c.downlink;
+      const rtt = c.rtt;
+      return et + "|" + dl + "|" + rtt;
     }
     return ""
 }
@@ -170,8 +168,11 @@ function hookFetch() {
             options = {};
         }
         let headers = options.headers;
-        let payload = window.JSON.stringify(getFingerprint());
-        payload = payload + new window.Date().toISOString();
+        let payload = {
+          fingerprint: getFingerprint(),
+          t: window.Date.now(),
+        }
+        payload = window.JSON.stringify(payload);
         const hash = getHashValue(payload);
         if (headers) {
             headers["payload"] = payload;
