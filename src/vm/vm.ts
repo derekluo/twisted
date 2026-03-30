@@ -3,6 +3,16 @@ import Context from "./context/context.js";
 import Frame from "./context/frame/frame.js";
 import BytecodeReader from "./reader.js";
 
+/** 闭包值的运行时标记 */
+interface ClosureValue {
+	$pc: number;
+	$caps: unknown[];
+}
+
+function isClosure(v: unknown): v is ClosureValue {
+	return typeof v === "object" && v !== null && "$pc" in v;
+}
+
 class VM {
 	private context: Context;
 	private reader: BytecodeReader;
@@ -157,11 +167,19 @@ class VM {
 				break;
 			}
 			case Opcode.Apply: {
-				const _func = this.context.frame.stack.pop();
-				const _this = this.context.frame.stack.pop();
-				const _args = this.context.frame.stack.pop();
-				const _return = _func.apply(_this, _args);
-				this.context.frame.stack.push(_return);
+				const func = this.context.frame.stack.pop();
+				const thisVal = this.context.frame.stack.pop();
+				const args = this.context.frame.stack.pop() as unknown[];
+				if (isClosure(func)) {
+					// 闭包作为 method 被调用（如 window.fetch = function(...){}），忽略 this
+					const returnPc = this.reader.getPc();
+					const frame = new Frame(returnPc, args, func.$caps);
+					this.context.pushFrame(frame);
+					this.reader.jump(func.$pc);
+				} else {
+					const ret = await Promise.resolve((func as Function).apply(thisVal, args));
+					this.context.frame.stack.push(ret);
+				}
 				break;
 			}
 			case Opcode.Await: {
@@ -216,15 +234,17 @@ class VM {
 				break;
 			}
 			case Opcode.PushFrame: {
+				// 调用约定：PushFrame 后紧跟 Jmp target（共 2 字节）。
+				// 返回地址 = getPc() + 2，即 Jmp 指令整体之后的首字节。
 				const args = this.context.frame.stack.pop();
-				const pc = this.reader.getPc();
-				const frame = new Frame(pc, args);
+				const returnPc = this.reader.getPc() + 2;
+				const frame = new Frame(returnPc, args);
 				this.context.pushFrame(frame);
 				break;
 			}
 			case Opcode.PopFrame: {
 				const frame = this.context.popFrame();
-				this.reader.jump(frame.getTracebackPc() + 1);
+				this.reader.jump(frame.getTracebackPc());
 				this.context.frame.stack.push(frame.stack.pop());
 				break;
 			}
@@ -256,9 +276,52 @@ class VM {
 				this.context.frame.stack.push(parameter);
 				break;
 			}
-			case Opcode.Halt:
+			// ── 闭包扩展 ──────────────────────────────────────────────────
+			case Opcode.MakeClosure: {
+				// 格式：MakeClosure <entryPc> <numCaptures> [slot0 slot1 ...]
+				// 从当前帧按槽位快照外层局部变量，生成闭包值推入栈
+				const entryPc = this.reader.read();
+				const numCaptures = this.reader.read();
+				const caps: unknown[] = [];
+				for (let i = 0; i < numCaptures; i++) {
+					const slot = this.reader.read();
+					caps.push(this.context.frame.variables.get(slot));
+				}
+				this.context.frame.stack.push({ $pc: entryPc, $caps: caps } as ClosureValue);
 				break;
+			}
+			case Opcode.LoadCapture: {
+				// 从当前帧的 captures 数组按下标加载捕获值
+				const index = this.reader.read();
+				this.context.frame.stack.push(this.context.frame.captures[index]);
+				break;
+			}
+			case Opcode.InvokeValue: {
+				// 调用栈上的函数值（闭包或原生函数），无 this
+				// 栈序：args(下) func(上)
+				const func = this.context.frame.stack.pop();
+				const args = this.context.frame.stack.pop() as unknown[];
+				if (isClosure(func)) {
+					// 闭包：建帧、带入捕获、跳入函数体
+					const returnPc = this.reader.getPc();
+					const frame = new Frame(returnPc, args, func.$caps);
+					this.context.pushFrame(frame);
+					this.reader.jump(func.$pc);
+				} else {
+					// 原生函数
+					const ret = await Promise.resolve((func as Function).apply(undefined, args));
+					this.context.frame.stack.push(ret);
+				}
+				break;
+			}
+		case Opcode.Not: {
+			const val = this.context.frame.stack.pop();
+			this.context.frame.stack.push(!val);
+			break;
 		}
+		case Opcode.Halt:
+			break;
+	}
 	}
 }
 

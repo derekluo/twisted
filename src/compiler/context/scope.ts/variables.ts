@@ -12,6 +12,10 @@ class Variables {
 		this.counter++;
 	}
 
+	public tryResolve(name: string): number | undefined {
+		return this.variables.get(name);
+	}
+
 	public resolve(name: string): number {
 		const index = this.variables.get(name);
 		if (index === undefined) {

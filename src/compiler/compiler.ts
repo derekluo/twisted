@@ -24,6 +24,7 @@ import {
 	ForStatement,
 	BlockStatement,
 	FunctionDeclaration,
+	FunctionExpression,
 	ReturnStatement,
 	ArrayExpression,
 	TryStatement,
@@ -42,6 +43,8 @@ class Compiler {
 	private dependencies: string[];
 	private bulldozer: Bulldozer;
 	private exceptionTable: ExceptionTable;
+	/** 编译函数表达式时记录待捕获的外层槽位；null 表示不在函数表达式上下文中 */
+	private closureCaptures: number[] | null = null;
 
 	constructor(source: string) {
 		this.program = parser.parse(source, { sourceType: "module" }).program;
@@ -126,32 +129,87 @@ class Compiler {
 		const L_FUNCTION_START = this.bulldozer.label(id.name, LabelType.FUNCTION_START);
 		const L_FUNCTION_END = this.bulldozer.label(undefined, LabelType.FUNCTION_END);
 		this.pushIr(createInstruction(Opcode.Jmp, [createArg(ArgKind.DynAddr, L_FUNCTION_END.id)]));
-		this.pushIr(createInstruction(Opcode.PushFrame));
 		this.bulldozer.record(L_FUNCTION_START.id, this.ir.length);
 		this.context.enter();
 		node.params.forEach((param, index) => {
-			switch (param.type) {
-				case "Identifier":
-					this.context.scope.declare(param.name);
-					// 通过索引加载形参
-					const load_param_ir = createInstruction(Opcode.LoadParameter, [
-						createArg(ArgKind.Number, index),
-					]);
-					this.pushIr(load_param_ir);
-					// 将形参存储到变量表中
-					const ir = createInstruction(Opcode.Store, [
-						createArg(ArgKind.Variable, this.context.scope.resolve(param.name)),
-					]);
-					this.pushIr(ir);
-					break;
-				default:
-					throw new Error(`Unsupported param type: ${param.type}`);
+			if (param.type !== "Identifier") {
+				throw new Error(`Unsupported param type: ${param.type}`);
 			}
+			this.context.scope.declare(param.name);
+			this.pushIr(createInstruction(Opcode.LoadParameter, [createArg(ArgKind.Number, index)]));
+			this.pushIr(createInstruction(Opcode.Store, [
+				createArg(ArgKind.Variable, this.context.scope.resolve(param.name)),
+			]));
 		});
 		this.compileBlockStatement(body as BlockStatement);
-		this.pushIr(createInstruction(Opcode.PopFrame));
+		// 函数体末尾没有 return 时提供默认出口
+		if (!this.blockEndsWithReturn(body as BlockStatement)) {
+			this.pushIr(createInstruction(Opcode.PopFrame));
+		}
 		this.context.exit();
 		this.bulldozer.record(L_FUNCTION_END.id, this.ir.length);
+	}
+
+	/** 判断块的最后一条语句是否为 return，避免生成多余的 PopFrame */
+	private blockEndsWithReturn(body: BlockStatement): boolean {
+		const stmts = body.body;
+		return stmts.length > 0 && stmts[stmts.length - 1].type === "ReturnStatement";
+	}
+
+	/**
+	 * 编译函数表达式（闭包）。
+	 *
+	 * 生成布局：
+	 *   Jmp L_END          ← 跳过函数体
+	 *   [L_START:]          ← 闭包入口
+	 *   LoadParameter / Store  ← 形参绑定
+	 *   ... 函数体 ...
+	 *   PopFrame            ← 无 return 时的默认出口
+	 *   [L_END:]
+	 *   MakeClosure <L_START> <numCaptures> [slot0 slot1 ...]
+	 */
+	private compileFunctionExpression(node: FunctionExpression) {
+		const body = node.body as BlockStatement;
+		const L_START = this.bulldozer.label(undefined, LabelType.FUNCTION_START);
+		const L_END   = this.bulldozer.label(undefined, LabelType.FUNCTION_END);
+
+		this.pushIr(createInstruction(Opcode.Jmp, [createArg(ArgKind.DynAddr, L_END.id)]));
+		this.bulldozer.record(L_START.id, this.ir.length);
+
+		// 进入新作用域，保存并初始化捕获列表
+		const savedCaptures = this.closureCaptures;
+		this.closureCaptures = [];
+		this.context.enter();
+
+		node.params.forEach((param, index) => {
+			if (param.type !== "Identifier") {
+				throw new Error(`Unsupported param type: ${param.type}`);
+			}
+			this.context.scope.declare(param.name);
+			this.pushIr(createInstruction(Opcode.LoadParameter, [createArg(ArgKind.Number, index)]));
+			this.pushIr(createInstruction(Opcode.Store, [
+				createArg(ArgKind.Variable, this.context.scope.resolve(param.name)),
+			]));
+		});
+
+		this.compileBlockStatement(body);
+		if (!this.blockEndsWithReturn(body)) {
+			this.pushIr(createInstruction(Opcode.PopFrame));
+		}
+
+		this.context.exit();
+		const capturedSlots = this.closureCaptures.slice();
+		this.closureCaptures = savedCaptures;
+
+		this.bulldozer.record(L_END.id, this.ir.length);
+
+		// MakeClosure: entryPc + numCaptures + 各槽位
+		this.pushIr(createInstruction(Opcode.MakeClosure, [
+			createArg(ArgKind.DynAddr,  L_START.id),
+			createArg(ArgKind.Number,   capturedSlots.length),
+			...capturedSlots.map((slot) => createArg(ArgKind.Variable, slot)),
+		]));
+		console.log("🔧 Compiling FunctionExpression, captures: %s", capturedSlots);
 	}
 
 	private compileBlockStatement(node: BlockStatement) {
@@ -257,6 +315,9 @@ class Compiler {
 			case "UnaryExpression":
 				this.compileUnaryExpression(node as UnaryExpression);
 				break;
+			case "FunctionExpression":
+				this.compileFunctionExpression(node as FunctionExpression);
+				break;
 			default:
 				throw new Error(`Unsupported expression type: ${node.type}`);
 		}
@@ -286,7 +347,9 @@ class Compiler {
 					);
 					return;
 				}
+				// 非函数声明的标识符（闭包值或原生函数）→ 通过 InvokeValue 调用
 				this.compileIdentifier(node.callee as Identifier);
+				this.pushIr(createInstruction(Opcode.InvokeValue));
 				break;
 			case "MemberExpression":
 				// this
@@ -314,10 +377,25 @@ class Compiler {
 	}
 
 	private compileIdentifier(node: Identifier) {
-		const index = this.context.scope.resolve(node.name);
-		const ir = createInstruction(Opcode.Load, [createArg(ArgKind.Variable, index)]);
-		this.pushIr(ir);
-		console.log("🤖 Compiling Identifier name: %s, index: %s", node.name, index);
+		if (this.closureCaptures !== null) {
+			// 函数表达式内部：通过词法作用域解析，外层变量作为 upvalue
+			const captures = this.closureCaptures;
+			const binding = this.context.scope.resolveBinding(node.name, (outerSlot) => {
+				const idx = captures.indexOf(outerSlot);
+				if (idx >= 0) return idx;
+				captures.push(outerSlot);
+				return captures.length - 1;
+			});
+			if (binding.kind === "local") {
+				this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, binding.slot)]));
+			} else {
+				this.pushIr(createInstruction(Opcode.LoadCapture, [createArg(ArgKind.Number, binding.index)]));
+			}
+		} else {
+			const index = this.context.scope.resolve(node.name);
+			this.pushIr(createInstruction(Opcode.Load, [createArg(ArgKind.Variable, index)]));
+		}
+		console.log("🤖 Compiling Identifier: %s", node.name);
 	}
 
 	private compileMemberExpression(node: MemberExpression) {
@@ -592,6 +670,11 @@ class Compiler {
 	private compileUnaryExpression(node: UnaryExpression) {
 		if (node.operator === "-" && node.argument.type === "NumericLiteral") {
 			this.pushIr(createInstruction(Opcode.Push, [createArg(ArgKind.Number, -node.argument.value)]));
+			return;
+		}
+		if (node.operator === "!") {
+			this.compileExpression(node.argument as Expression);
+			this.pushIr(createInstruction(Opcode.Not));
 			return;
 		}
 		throw new Error(`Unsupported unary expression: ${node.operator}`);

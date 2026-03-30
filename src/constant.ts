@@ -30,6 +30,10 @@ const enum Opcode {
 	SetProperty = 0x1c,
 	GetElement = 0x1d,
 	SetElement = 0x1e,
+	MakeClosure = 0x1f,
+	LoadCapture = 0x20,
+	InvokeValue  = 0x21,
+	Not = 0x22,
 }
 
 const OPCODE_NAMES: Record<number, string> = {
@@ -64,6 +68,10 @@ const OPCODE_NAMES: Record<number, string> = {
 	[Opcode.SetProperty]: "SetProperty",
 	[Opcode.GetElement]: "GetElement",
 	[Opcode.SetElement]: "SetElement",
+	[Opcode.MakeClosure]: "MakeClosure",
+	[Opcode.LoadCapture]: "LoadCapture",
+	[Opcode.InvokeValue]:  "InvokeValue",
+	[Opcode.Not]: "Not",
 };
 
 const enum LabelType {

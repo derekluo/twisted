@@ -9,7 +9,8 @@ class Context {
 	}
 
 	public enter() {
-		const scope = new Scope();
+		const parent = this.scopes[this.scopes.length - 1];
+		const scope = new Scope(parent);
 		this.scopes.push(scope);
 	}
 

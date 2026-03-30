@@ -4,13 +4,15 @@ import Variables from "./variables.js";
 class Frame {
 	public stack: Stack;
 	public variables: Variables;
+	public captures: any[];
 	private parameters: any[];
 	private tracebackPc?: number;
 
-	constructor(tracebackPc?: number, parameters?: any[]) {
+	constructor(tracebackPc?: number, parameters?: any[], captures?: any[]) {
 		this.stack = new Stack();
 		this.variables = new Variables();
-		this.parameters = parameters || [];
+		this.parameters = parameters ?? [];
+		this.captures = captures ?? [];
 		this.tracebackPc = tracebackPc;
 	}
 
