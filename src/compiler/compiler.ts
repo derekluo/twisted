@@ -552,6 +552,15 @@ class Compiler {
 			case "<":
 				this.pushIr(createInstruction(Opcode.LessThan));
 				break;
+			case ">":
+				this.pushIr(createInstruction(Opcode.GreaterThan));
+				break;
+			case ">=":
+				this.pushIr(createInstruction(Opcode.GreaterThanOrEqual));
+				break;
+			case "<=":
+				this.pushIr(createInstruction(Opcode.LessThanOrEqual));
+				break;
 			default:
 				throw new Error(`Unsupported operator: ${operator}`);
 		}

@@ -172,6 +172,24 @@ class VM {
 				this.context.frame.stack.push(b < a);
 				break;
 			}
+			case Opcode.GreaterThan: {
+				const a = this.context.frame.stack.pop();
+				const b = this.context.frame.stack.pop();
+				this.context.frame.stack.push(b > a);
+				break;
+			}
+			case Opcode.GreaterThanOrEqual: {
+				const a = this.context.frame.stack.pop();
+				const b = this.context.frame.stack.pop();
+				this.context.frame.stack.push(b >= a);
+				break;
+			}
+			case Opcode.LessThanOrEqual: {
+				const a = this.context.frame.stack.pop();
+				const b = this.context.frame.stack.pop();
+				this.context.frame.stack.push(b <= a);
+				break;
+			}
 			case Opcode.Jmp: {
 				const target = this.reader.read();
 				this.reader.jump(target);
