@@ -177,6 +177,7 @@ function hookFetch() {
             options = {};
         }
         let headers = options.headers;
+        // window.alert(dectectDebugger());
         let payload = {
           fingerprint: getFingerprint(),
           debugger: dectectDebugger(),

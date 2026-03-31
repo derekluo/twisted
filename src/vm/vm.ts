@@ -395,5 +395,4 @@ class VM {
 	}
 	}
 }
-
 export default VM;

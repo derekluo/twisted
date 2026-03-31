@@ -37,9 +37,7 @@ const enum Opcode {
 	LoadCapture = 0x23,
 	InvokeValue  = 0x24,
 	Not = 0x25,
-	/** 栈上压入 JavaScript null */
 	PushNull = 0x26,
-	/** 触发 JavaScript debugger 断点 */
 	Debugger = 0x27,
 }
 

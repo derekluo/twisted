@@ -16,7 +16,7 @@ const obfuscatorOptions: JavaScriptObfuscator.ObfuscatorOptions = {
 	numbersToExpressions: true,
 	stringArray: true,
 	stringArrayThreshold: 1,
-	stringArrayEncoding: ["base64"],
+	stringArrayEncoding: ["rc4"],
 	stringArrayRotate: true,
 	stringArrayShuffle: true,
 	stringArrayWrappersCount: 4,
@@ -36,7 +36,7 @@ const obfuscatorOptions: JavaScriptObfuscator.ObfuscatorOptions = {
 	selfDefending: true,
 	debugProtection: true,
 	debugProtectionInterval: 2000,
-	reservedNames: ["^TwistedRuntimeBundle$", "^TwistedRuntime$"],
+	// reservedNames: ["^TwistedRuntimeBundle$", "^TwistedRuntime$"],
 };
 
 function createRuntimeEntry(bundle: Bundle): string {
@@ -80,7 +80,7 @@ async function main() {
 		drop: ["console"],
 		format: "iife",
 		platform: "browser",
-		globalName: "TwistedRuntimeBundle",
+		// globalName: "TwistedRuntimeBundle",
 		outfile: outFile,
 	});
 
