@@ -33,51 +33,48 @@ function getCanvasFingerprint() {
 function getWebGLFingerprint() {
     const canvas = window.document.createElement("canvas");
     const gl = canvas.getContext("webgl");
-    if (!gl) {
-        return "";
-    }
-    const extDbg = gl.getExtension("WEBGL_debug_renderer_info");
     let vendor = "";
     let renderer = "";
-    if (extDbg) {
+    if (gl) {
+      const extDbg = gl.getExtension("WEBGL_debug_renderer_info");
+      if (extDbg) {
         vendor = gl.getParameter(extDbg.UNMASKED_VENDOR_WEBGL);
         renderer = gl.getParameter(extDbg.UNMASKED_RENDERER_WEBGL);
-    }
-    if (!vendor) {
-        vendor = "";
-    }
-    if (!renderer) {
-        renderer = "";
-    }
-    let extStr = "";
-    const exts = gl.getSupportedExtensions();
-    if (exts) {
-        for (let i = 0; i < exts.length; i++) {
-            if (0 < i) {
-                extStr += ",";
+        const exts = gl.getSupportedExtensions();
+        let extStr = "";
+
+        if (exts) {
+            for (let i = 0; i < exts.length; i++) {
+                if (0 < i) {
+                    extStr += ",";
+                }
+                extStr += exts[i];
             }
-            extStr += exts[i];
         }
+        return vendor + "|" + renderer + "|" + extStr;
+      }
     }
-    return vendor + "|" + renderer + "|" + extStr;
+    return "";
 }
 
-/** GPU 展示名：与 WebGL unmasked renderer 一致（浏览器内无法做驱动级 GPU 探针） */
 function getGpuFingerprint() {
+    // 2) 回退 WebGL
     const canvas = window.document.createElement("canvas");
     const gl = canvas.getContext("webgl");
-    if (!gl) {
-        return "";
+    if (gl) {
+      const extDbg = gl.getExtension("WEBGL_debug_renderer_info");
+      if (extDbg) {
+        const r = gl.getParameter(extDbg.UNMASKED_RENDERER_WEBGL);
+        if (r) {
+          return r;
+        }
+      }
+      const r2 = gl.getParameter(gl.RENDERER);
+      if (r2) {
+        return r2;
+      }
     }
-    const extDbg = gl.getExtension("WEBGL_debug_renderer_info");
-    if (!extDbg) {
-        return "";
-    }
-    const r = gl.getParameter(extDbg.UNMASKED_RENDERER_WEBGL);
-    if (!r) {
-        return "";
-    }
-    return r;
+    return "";
 }
 
 /** navigator.plugins 名称列表（现代浏览器常为空数组） */
@@ -129,7 +126,6 @@ function getFontFingerprint() {
 
 function getNetFingerprint() {
     const c = window.navigator.connection;
-    // undefined：未实现 API；null：规范允许；!c 一并处理（勿只写 ===null 或 ===undefined）
     if (c) {
       const et = c.effectiveType;
       const dl = c.downlink;
@@ -139,7 +135,7 @@ function getNetFingerprint() {
     return ""
 }
 
-function getFingerprint() {
+async function getFingerprint() {
     return {
         ua: window.navigator.userAgent,
         lang: window.navigator.language,
@@ -163,7 +159,7 @@ async function rsaEncrypt(plaintext) {
 
 function hookFetch() {
     const nativeFetch = window.fetch;
-    window.fetch = async function(url, options) {
+    window.fetch = function(url, options) {
         if (!options) {
             options = {};
         }
