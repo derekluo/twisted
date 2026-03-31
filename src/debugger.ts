@@ -13,38 +13,12 @@ function debugInstruction(ir: Instruction[]) {
 
 async function main() {
 	const code = `
-const a = 1;
-const b = a + 2;
-const c = 1 + a + b;
-console.log(a, b);
+// console.log(window.tws)
+// if (window.tws) {
+// 	console.log("find tws")
+// }
 
-if (b == c) {
-    const d = 3;
-    window.console.log(d);
-} else {
-	const e = 4;
-	window.console.log(e);
-}
-
-async function test() {
-	const dt = new window.Date();
-	return dt.getUTCFullYear();
-}
-
-
-console.log(await test())
-
-try {
-	console.log(10);
-} catch (error) {
-	console.error(error);
-}
-
-const t_b = true;
-console.log(t_b)
-
-const t_s = "Hello World!";
-console.log(t_s)
+if (false) { console.log("hit"); } else { console.log("miss"); }
     `;
 	const compiler = new Compiler(code);
 	const ir = compiler.compile();

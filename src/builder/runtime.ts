@@ -32,10 +32,10 @@ const obfuscatorOptions: JavaScriptObfuscator.ObfuscatorOptions = {
 	deadCodeInjection: true,
 	deadCodeInjectionThreshold: 0.4,
 	simplify: true,
-	disableConsoleOutput: true,
+	// disableConsoleOutput: true,
 	selfDefending: true,
-	debugProtection: true,
-	debugProtectionInterval: 2000,
+	// debugProtection: true,
+	// debugProtectionInterval: 2000,
 	// reservedNames: ["^TwistedRuntimeBundle$", "^TwistedRuntime$"],
 };
 

@@ -242,6 +242,7 @@ class Compiler {
 			this.bulldozer.record(L_END.id, this.ir.length);
 		} else {
 			this.pushIr(createInstruction(Opcode.JmpIf, [createArg(ArgKind.DynAddr, L_THEN.id)]));
+			this.pushIr(createInstruction(Opcode.Jmp, [createArg(ArgKind.DynAddr, L_END.id)]));
 			this.bulldozer.record(L_THEN.id, this.ir.length);
 			this.compileStatement(node.consequent as Statement);
 			this.bulldozer.record(L_END.id, this.ir.length);

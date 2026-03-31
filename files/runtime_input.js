@@ -27,9 +27,6 @@ function getCanvasFingerprint() {
     return getHashValue(canvasFp);
 }
 
-/**
- * WebGL vendor / renderer / 扩展列表（字符串拼接，便于哈希）
- */
 function getWebGLFingerprint() {
     const canvas = window.document.createElement("canvas");
     const gl = canvas.getContext("webgl");
@@ -77,7 +74,6 @@ function getGpuFingerprint() {
     return "";
 }
 
-/** navigator.plugins 名称列表（现代浏览器常为空数组） */
 function getPluginListFingerprint() {
     const plugins = window.navigator.plugins;
     let s = "";
@@ -132,7 +128,7 @@ function getNetFingerprint() {
     return ""
 }
 
-async function getFingerprint() {
+function getFingerprint() {
     return {
         ua: window.navigator.userAgent,
         lang: window.navigator.language,
@@ -148,26 +144,52 @@ async function getFingerprint() {
     };
 }
 
-function detectDebuggerScore(rounds, thresholdMs, hitRatio) {
-  let hits = 0;
-  for (let i = 0; i < rounds; i++) {
-      const t1 = window.performance.now();
-      debugger;
-      const t2 = window.performance.now();
-      if (t2 - t1 > thresholdMs) {
-          hits++;
-      }
-  }
-  return hits / rounds >= hitRatio; // 例如 rounds=5, hitRatio=0.6
+async function testDebuggerRunningTimeDectect() {
+    const code = "debugger;"
+    const t1 = window.performance.now();
+    const blob = new window.Blob([code], { type: 'application/javascript' });
+    await new window.Worker(window.URL.createObjectURL(blob));
+    const t2 = window.performance.now();
+    return t2 - t1;
 }
 
-function dectectDebugger() {
-    return detectDebuggerScore(5, 100, 0.6);
+function windowSizeDebuggerDectect() {
+    return window.outerWidth - window.innerWidth
+}
+
+function consoleDebugerDectect() {
+    if (window.onConsole) {
+        return true
+    }
+    return false
+}
+
+async function dectectDebugger() {
+    let debugMetrics = []
+    debugMetrics.push(await testDebuggerRunningTimeDectect());
+    debugMetrics.push(windowSizeDebuggerDectect());
+    debugMetrics.push(consoleDebugerDectect());
+    return debugMetrics;
 }
 
 
 async function rsaEncrypt(plaintext) {
     return true;
+}
+
+
+async function getSign() {
+    let payload = {
+        fingerprint: getFingerprint(),
+        debugger: await dectectDebugger(),
+        automation: false,
+        headless: false,
+        hook: false,
+    }
+    const signString = window.JSON.stringify(payload) + "|" + window.Date.now() + "|" + window.Math.floor(window.Math.random() * 10000);
+    console.log("signString: " + signString)
+
+    return getHashValue(signString);
 }
 
 function hookFetch() {
@@ -177,24 +199,11 @@ function hookFetch() {
             options = {};
         }
         let headers = options.headers;
-        // window.alert(dectectDebugger());
-        let payload = {
-          fingerprint: getFingerprint(),
-          debugger: dectectDebugger(),
-          automation: false,
-          headless: false,
-          hook: false,
-          t: window.Date.now(),
-        }
-        payload = window.JSON.stringify(payload);
-        const hash = getHashValue(payload);
         if (headers) {
-            headers["payload"] = payload;
-            headers["X-Twisted-FP"] = hash;
+            headers["X-Twisted-Sign"] = getSign();
         } else {
             headers = {
-                "payload": payload,
-                "X-Twisted-FP": hash,
+                "X-Twisted-Sign": getSign(),
             };
         }
         options.headers = headers;
@@ -202,5 +211,14 @@ function hookFetch() {
     };
 }
 
-hookFetch();
+function hookConsoleLog() {
+    var nativeLog = window.console.log;
+}
+
+function init() {
+    // hookConsoleLog()
+    hookFetch();
+}
+
+init()
 true
