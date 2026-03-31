@@ -90,9 +90,6 @@ function getPluginListFingerprint() {
     return s;
 }
 
-/**
- * 简易字体探测：与纯 monospace 基准宽度对比
- */
 function getFontFingerprint() {
     const canvas = window.document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -151,6 +148,22 @@ async function getFingerprint() {
     };
 }
 
+function detectDebuggerScore(rounds, thresholdMs, hitRatio) {
+  let hits = 0;
+  for (let i = 0; i < rounds; i++) {
+      const t1 = window.performance.now();
+      debugger;
+      const t2 = window.performance.now();
+      if (t2 - t1 > thresholdMs) {
+          hits++;
+      }
+  }
+  return hits / rounds >= hitRatio; // 例如 rounds=5, hitRatio=0.6
+}
+
+function dectectDebugger() {
+    return detectDebuggerScore(5, 100, 0.6);
+}
 
 
 async function rsaEncrypt(plaintext) {
@@ -166,6 +179,10 @@ function hookFetch() {
         let headers = options.headers;
         let payload = {
           fingerprint: getFingerprint(),
+          debugger: dectectDebugger(),
+          automation: false,
+          headless: false,
+          hook: false,
           t: window.Date.now(),
         }
         payload = window.JSON.stringify(payload);
