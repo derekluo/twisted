@@ -1,5 +1,7 @@
 # Twisted
 
+最终目标是提高roi 使攻击者roi < 1
+核心是摧毁攻击者工程化能力
 Twisted 是一个面向浏览器运行时保护实验的 JavaScript VM 项目。  
 当前主线是把输入脚本编译为 `bytecode + meta`，再将 VM 与产物打包为浏览器可执行的单文件 runtime。
 
