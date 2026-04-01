@@ -8,7 +8,7 @@ interface Bundle {
 }
 
 async function main() {
-	const inputPath = process.argv[2] ?? "files/runtime_input.js";
+	const inputPath = process.argv[2] ?? "files/fingerprint.js";
 	const outputPath = process.argv[3] ?? "dist/runtime/bundle.json";
 
 	const source = await readFile(inputPath, "utf-8");
