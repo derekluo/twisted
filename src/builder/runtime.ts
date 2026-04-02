@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { build } from "esbuild";
 import JavaScriptObfuscator from "javascript-obfuscator";
+import * as ts from "typescript";
 
 interface Bundle {
 	bytecode: number[];
@@ -60,6 +61,20 @@ const meta = ${meta};
 `;
 }
 
+function downlevelToEs5(code: string): string {
+	return ts.transpileModule(code, {
+		compilerOptions: {
+			target: ts.ScriptTarget.ES5,
+			module: ts.ModuleKind.None,
+			allowJs: true,
+			importHelpers: false,
+			downlevelIteration: true,
+			useDefineForClassFields: false,
+		},
+		fileName: "runtime-es5.js",
+	}).outputText;
+  }
+
 async function main() {
 	const bundlePath = process.argv[2] ?? "dist/runtime/bundle.json";
 	const outFile = process.argv[3] ?? "dist/browser/runtime.js";
@@ -88,31 +103,14 @@ async function main() {
 		outfile: outFile,
 	});
 
-	await build({
-		stdin: {
-			contents: entry,
-			resolveDir: process.cwd(),
-			sourcefile: "runtime-entry.ts",
-			loader: "ts",
-		},
-		bundle: true,
-		minify: true,
-		legalComments: "none",
-		drop: ["console"],
-		format: "esm",
-		platform: "browser",
-		outfile: outFileEsm,
-	});
-
 	const iifeSource = await readFile(outFile, "utf-8");
-	const iifeObfResult = JavaScriptObfuscator.obfuscate(iifeSource, obfuscatorOptions);
+
+	const es5Entry = downlevelToEs5(iifeSource);
+
+	const iifeObfResult = JavaScriptObfuscator.obfuscate(es5Entry, obfuscatorOptions);
 	await writeFile(outFile, iifeObfResult.getObfuscatedCode(), "utf-8");
 
-	const esmSource = await readFile(outFileEsm, "utf-8");
-	const esmObfResult = JavaScriptObfuscator.obfuscate(esmSource, obfuscatorOptions);
-	await writeFile(outFileEsm, esmObfResult.getObfuscatedCode(), "utf-8");
-
-	console.log(`Runtime bundles written to: ${outFile}, ${outFileEsm}`);
+	console.log(`Runtime bundles written to: ${outFile}`);
 }
 
 void main();
