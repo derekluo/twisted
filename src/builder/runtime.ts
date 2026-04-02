@@ -9,10 +9,11 @@ interface Bundle {
 
 const obfuscatorOptions: JavaScriptObfuscator.ObfuscatorOptions = {
 	compact: true,
-	identifierNamesGenerator: "hexadecimal",
+	identifierNamesGenerator: "mangled",
 	renameGlobals: true,
+	domainLock: [],
 	renameProperties: true,
-	renamePropertiesMode: "safe",
+	renamePropertiesMode: "unsafe",
 	numbersToExpressions: true,
 	stringArray: true,
 	stringArrayThreshold: 1,
