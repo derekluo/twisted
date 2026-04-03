@@ -5,5 +5,9 @@ export default defineConfig({
 		environment: "node",
 		include: ["tests/**/*.test.ts"],
 		globals: false,
+		// reporters: ["verbose"],
+		onConsoleLog(_log: string) {
+			return false;
+		},
 	},
 });
