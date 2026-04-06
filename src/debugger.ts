@@ -35,7 +35,10 @@ if (!window.tws) { console.log("hit"); } else { console.log("miss"); }
 	const obfuscatedIr = obfuscator.obfuscate(ir);
 	const assembler = new Assembler();
 	const bundle = assembler.assemble(obfuscatedIr);
+	console.log("// --- 编译后 IR（未混淆）---");
 	debugInstruction(ir);
+	console.log("// --- ArithmeticDeformationPass 之后 ---");
+	debugInstruction(obfuscatedIr);
 	console.dir(bundle.meta, { depth: null });
 	console.dir(bundle.bytecode, { depth: null });
 	console.log("IR length:", obfuscatedIr.length);
