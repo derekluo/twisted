@@ -125,9 +125,68 @@ dist/              # 构建输出（gitignore）
 
 ---
 
-## 语法支持
+## JS 语法与功能对照
 
-支持的语句与表达式以编译器实现为准；完整列表见 **`docs/ir.md`**。未实现的节点会抛出 `Unsupported ...`，可按需扩展。
+以下为 **Compiler**（`src/compiler/compiler.ts`）当前实现与 **VM**（`src/vm/vm.ts`）执行能力对照，按「是否已接入」标记。未列出或标记为未完成的语法会 **`throw new Error('Unsupported …')`** 或无法通过编译。细节以源码为准。
+
+### 语句（Statement）
+
+| 语法 | 状态 | 说明 |
+|------|:----:|------|
+| `ExpressionStatement` | ✅ | 表达式语句 |
+| `VariableDeclaration`（`let` / `const`） | ⚠️ | 每个声明**必须有初值**；绑定仅限 **`Identifier`**，无解构 / 无 `var` 单独路径 |
+| `IfStatement` | ✅ | 含 `else` 与不含 `else` |
+| `ForStatement` | ✅ | 经典三段式 `for (init; test; update) body`；`init` 可为变量声明或表达式 |
+| `BlockStatement` | ✅ | |
+| `FunctionDeclaration` | ⚠️ | 形参仅限 **`Identifier`**，不支持 `RestElement` / 默认参数 / 解构 |
+| `ReturnStatement` | ⚠️ | **必须**带表达式，不支持空 `return;` |
+| `TryStatement` | ⚠️ | 需带 **`catch`**；**无 `finally`**；异常进入 `catch` 依赖 VM 与运行时约定 |
+| `DebuggerStatement` | ✅ | 生成 `Debugger` 指令 |
+| `WhileStatement` / `DoWhileStatement` | ❌ | |
+| `SwitchStatement` | ❌ | |
+| `BreakStatement` / `ContinueStatement` | ❌ | |
+| `ThrowStatement` | ❌ | |
+| `EmptyStatement` | ❌ | |
+| `LabeledStatement` | ❌ | |
+| `ClassDeclaration` / `ClassExpression` | ❌ | |
+| `ImportDeclaration` / `ExportDeclaration` | ❌ | 源码按 `module` 解析，但未编译模块语法 |
+
+### 表达式（Expression）
+
+| 语法 | 状态 | 说明 |
+|------|:----:|------|
+| `Identifier` | ✅ | 含闭包捕获路径下的 `Load` / `LoadCapture` |
+| 字面量 `NumericLiteral` / `StringLiteral` / `BooleanLiteral` / `NullLiteral` | ✅ | 布尔在 IR 中用 `0`/`1` 表示 |
+| `CallExpression` | ⚠️ | `callee` 支持 `Identifier`（含函数声明名 / 闭包）、`MemberExpression`、`CallExpression`（部分链式） |
+| `MemberExpression` | ⚠️ | `obj.prop` 时 `property` 仅 **`Identifier`**；`obj[key]`（`computed`）走 `GetElement`；`object` 侧类型受限（如字面量、`this` 等会报错），见 `compileMemberExpression` |
+| `NewExpression` | ⚠️ | `Construct`，`callee` 类型受限 |
+| `AwaitExpression` | ✅ | 生成 `Await`，需异步执行环境 |
+| `BinaryExpression` | ⚠️ | 支持 `+ - * /`、`==` `===`、`| ^`、移位 `<<` `>>>`（**无**有符号 `>>`）、比较 `< > <= >=`；**不支持** `&&` `||`（其为 `LogicalExpression`）、`%`、`**`、`&` 等 |
+| `UnaryExpression` | ⚠️ | 支持 `!`；负数字面量折叠（如 `-1`）；**一般一元** `+`、`typeof` 等未支持 |
+| `AssignmentExpression` | ⚠️ | 左侧为 `Identifier`：`=`、`+=`、`-=`、`^=`；左侧为 `MemberExpression`：**仅 `=`** |
+| `UpdateExpression` | ⚠️ | 仅 `Identifier` 上的 `++` / `--` |
+| `FunctionExpression` | ✅ | 闭包、`MakeClosure` |
+| `ArrayExpression` | ⚠️ | **不支持**稀疏数组（`[,]`） |
+| `ObjectExpression` | ⚠️ | 仅 `ObjectProperty`；**不支持**计算属性名、对象方法简写等扩展 |
+| `TemplateLiteral` | ❌ | |
+| `LogicalExpression`（`&&` `||` `??`） | ❌ | |
+| `ConditionalExpression`（`?:`） | ❌ | |
+| `SequenceExpression`（`,`） | ❌ | |
+| `ThisExpression` | ❌ | |
+| `MetaProperty` / `ImportExpression` / `Super` | ❌ | |
+
+### 运行时与构建相关
+
+| 能力 | 状态 | 说明 |
+|------|:----:|------|
+| 依赖注入表 | ✅ | 默认 `window`、`console`（`Compiler` 内 `dependencies`） |
+| `async` 函数与 `await`（编译目标） | ✅ | 与 `Await` 等配合 |
+| 浏览器 `runtime.js` 打包 | ✅ | 见 `npm run build:runtime` / `build:all` |
+| IR 混淆 Pass | ✅ | 如 `ArithmeticDeformationPass`、`DeadCodePass` 等，可串联 |
+
+**图例：** ✅ 已支持　⚠️ 部分支持 / 有约束　❌ 未实现  
+
+更细的 IR / Opcode 说明见 **[docs/ir.md](docs/ir.md)**。
 
 ---
 
@@ -156,12 +215,6 @@ Issues / PR 欢迎。建议：
 
 ---
 
-## 安全与合规
+## 致谢
 
-本项目用于**安全研究与教育**。请勿用于未授权入侵、绕过他人服务条款或违法用途；使用者自行承担合规责任。
-
----
-
-## License
-
-**ISC** — 见 `package.json` 中 `license` 字段。开源发布建议在仓库根目录增加 `LICENSE` 文本文件以便自动识别。
+[KProtect](https://github.com/yang-zhongtian/KProtect)（`yang-zhongtian/KProtect`）
