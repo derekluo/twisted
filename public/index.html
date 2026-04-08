@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Twisted — runtime + fetch</title>
+		<style>
+			/* 浅色 · 冷调 · 克制留白 */
+			:root {
+				color-scheme: light;
+				--bg-top: #e9eef5;
+				--bg-bottom: #f2f5f9;
+				--surface: #fdfdfd;
+				--surface-mist: #f4f6f9;
+				--surface-code: #eef1f6;
+				--border: rgba(71, 85, 105, 0.14);
+				--border-subtle: rgba(100, 116, 139, 0.1);
+				--text: #1e293b;
+				--text-soft: #475569;
+				--text-muted: #7c8a9e;
+				--accent: #334155;
+				--accent-hover: #1e293b;
+				--ring: rgba(51, 65, 85, 0.18);
+				--radius: 10px;
+				--shadow-card: 0 1px 0 rgba(15, 23, 42, 0.04), 0 12px 40px rgba(15, 23, 42, 0.04);
+				font-family:
+					ui-sans-serif,
+					system-ui,
+					-apple-system,
+					"Segoe UI",
+					Roboto,
+					"PingFang SC",
+					"Noto Sans SC",
+					sans-serif;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				min-height: 100dvh;
+				background: linear-gradient(165deg, var(--bg-top) 0%, var(--bg-bottom) 48%, #eef1f6 100%);
+				background-attachment: fixed;
+				color: var(--text);
+				line-height: 1.6;
+				font-size: 15px;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			.shell {
+				max-width: 42rem;
+				margin: 0 auto;
+				padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 3vw, 1.5rem);
+			}
+
+			.hero {
+				margin-bottom: 1.75rem;
+			}
+
+			.hero h1 {
+				margin: 0 0 0.4rem;
+				font-size: clamp(1.375rem, 3.5vw, 1.75rem);
+				font-weight: 600;
+				letter-spacing: -0.04em;
+				color: var(--text);
+			}
+
+			.hero p {
+				margin: 0;
+				color: var(--text-muted);
+				font-size: 0.90625rem;
+				font-weight: 400;
+				letter-spacing: 0.01em;
+			}
+
+			.hero code {
+				font-size: 0.88em;
+				padding: 0.12em 0.4em;
+				border-radius: 5px;
+				background: var(--surface-code);
+				border: 1px solid var(--border-subtle);
+				color: var(--text-soft);
+			}
+
+			.panel {
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow-card);
+				padding: 1.35rem 1.4rem;
+			}
+
+			.field {
+				display: flex;
+				flex-direction: column;
+				gap: 0.5rem;
+				margin-bottom: 1rem;
+			}
+
+			.field label {
+				font-size: 0.75rem;
+				font-weight: 500;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+				color: var(--text-muted);
+			}
+
+			.field input[type="url"] {
+				width: 100%;
+				padding: 0.7rem 0.95rem;
+				font-size: 0.9375rem;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				background: var(--surface-mist);
+				color: var(--text);
+				transition:
+					border-color 0.2s ease,
+					box-shadow 0.2s ease,
+					background 0.2s ease;
+			}
+
+			.field input[type="url"]:hover {
+				background: #fff;
+				border-color: rgba(71, 85, 105, 0.22);
+			}
+
+			.field input[type="url"]:focus {
+				outline: none;
+				background: #fff;
+				border-color: rgba(51, 65, 85, 0.35);
+				box-shadow: 0 0 0 3px var(--ring);
+			}
+
+			.actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.75rem;
+				align-items: center;
+			}
+
+			button#go {
+				appearance: none;
+				border: 1px solid rgba(30, 41, 59, 0.12);
+				border-radius: 8px;
+				padding: 0.58rem 1.25rem;
+				font-size: 0.875rem;
+				font-weight: 500;
+				letter-spacing: 0.02em;
+				cursor: pointer;
+				background: var(--accent);
+				color: #f8fafc;
+				box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+				transition:
+					background 0.2s ease,
+					border-color 0.2s ease,
+					transform 0.12s ease,
+					box-shadow 0.2s ease;
+			}
+
+			button#go:hover {
+				background: var(--accent-hover);
+				border-color: transparent;
+				box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+			}
+
+			button#go:active {
+				transform: translateY(1px);
+			}
+
+			#timing {
+				margin-top: 1rem;
+				padding: 0.7rem 0.95rem;
+				font-size: 0.8125rem;
+				color: var(--text-soft);
+				background: rgba(255, 255, 255, 0.65);
+				backdrop-filter: blur(8px);
+				border-radius: 8px;
+				border: 1px solid var(--border-subtle);
+				min-height: 2.5rem;
+			}
+
+			#timing:empty {
+				display: none;
+			}
+
+			#out {
+				margin-top: 1rem;
+				margin-bottom: 0;
+				padding: 1.1rem 1.15rem;
+				background: var(--surface);
+				border: 1px solid var(--border);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow-card);
+				white-space: pre-wrap;
+				word-break: break-word;
+				font-size: 0.78125rem;
+				line-height: 1.65;
+				color: var(--text-soft);
+				font-family:
+					ui-monospace,
+					SFMono-Regular,
+					"SF Mono",
+					Menlo,
+					Consolas,
+					monospace;
+				tab-size: 2;
+				overflow-x: auto;
+			}
+
+			#out:empty {
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<main class="shell">
+			<header class="hero">
+				<h1>Twisted</h1>
+				<p>
+					<code>runtime.js</code> 在加载时执行 VM。请求会附带自定义头 <code>X-Twisted-Sign</code>（见下方）。发起
+					<code>fetch</code> 后输出请求头、响应头、响应体与耗时。可打开<strong>开发者工具 → 控制台</strong>查看 VM
+					脚本中的指纹相关输出。
+				</p>
+			</header>
+
+			<section class="panel" aria-label="请求">
+				<div class="field">
+					<label for="url">请求 URL（需目标站允许 CORS）</label>
+					<input id="url" type="url" value="https://httpbin.org/get" autocomplete="url" spellcheck="false" />
+				</div>
+				<div class="actions">
+					<button type="button" id="go">发起 fetch</button>
+				</div>
+			</section>
+
+			<div id="timing" class="meta" aria-live="polite"></div>
+			<pre id="out"></pre>
+		</main>
+
+		<!--
+			从仓库根目录起静态服务时可用相对路径，例如：
+			npx serve .
+			然后打开 http://localhost:3000/public/index.html
+			若把 public 设为站点根目录，请把下面改为 /dist/browser/runtime.js 并确保构建产物可访问。
+		-->
+		<script src="../dist/browser/runtime.js"></script>
+		<script type="module">
+			const urlInput = document.getElementById("url");
+			const go = document.getElementById("go");
+			const out = document.getElementById("out");
+			const timing = document.getElementById("timing");
+
+			/** @param {Headers} h */
+			function formatHeaders(h) {
+				const rows = [...h.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+				if (rows.length === 0) {
+					return "（无 — 或未向脚本暴露）";
+				}
+				return rows.map(([k, v]) => `${k}: ${v}`).join("\n");
+			}
+
+			go.addEventListener("click", async () => {
+				const url = urlInput.value.trim();
+				out.textContent = "";
+				timing.textContent = "";
+
+				const req = new Request(url, { method: "GET", cache: "no-store" });
+
+				const t0 = performance.now();
+				try {
+					const res = await fetch(req);
+					const bodyText = await res.text();
+					const t1 = performance.now();
+					const ms = (t1 - t0).toFixed(2);
+
+					timing.textContent = `耗时：${ms} ms（从发起 fetch 到读完响应体） · HTTP ${res.status} ${res.statusText}`;
+
+					const blocks = [
+						"=== 请求 ===",
+						`${req.method} ${req.url}`,
+						"",
+						"=== 响应头 ===",
+						formatHeaders(res.headers),
+						"",
+						"=== 响应体 ===",
+						bodyText,
+					];
+					out.textContent = blocks.join("\n");
+				} catch (e) {
+					const t1 = performance.now();
+					const ms = (t1 - t0).toFixed(2);
+					timing.textContent = `耗时：${ms} ms · 请求失败`;
+					const blocks = [
+						"=== 请求 ===",
+						`${req.method} ${req.url}`,
+						"",
+						"— Request.headers —",
+						formatHeaders(req.headers),
+						"",
+						"=== 错误 ===",
+						String(e),
+					];
+					out.textContent = blocks.join("\n");
+				}
+			});
+		</script>
+	</body>
+</html>
