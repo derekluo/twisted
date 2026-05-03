@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import { readFile } from "node:fs/promises";
-import { buildBundle } from "./builder/compiler.js";
+import { LinearBuildBundle } from "./builder/linear.js";
+import { HyperionBuildBundle, HyperionDump } from "./builder/hyperion.js";
 import { buildRuntime } from "./builder/runtime.js";
 
 type CliCommand =
 	| "build"
+	| "dump"
 	| "runtime"
 	| "all"
 	| "help"
@@ -21,6 +23,7 @@ Twisted CLI
 
 Usage:
   twisted build <inputPath> <outputPath> [--obfuscate]
+  twisted dump <inputPath> [outDir]
   twisted runtime <bundlePath> <outputPath> [--obfuscate]
   twisted all <inputPath> <bundlePath> <runtimePath> [--obfuscate]
   twisted help
@@ -68,7 +71,19 @@ async function main() {
 			}
 			const inputPath = values[0]!;
 			const outputPath = values[1]!;
-			await buildBundle(inputPath, outputPath, { obfuscate });
+			await HyperionBuildBundle(inputPath, outputPath, { obfuscate });
+			return;
+		}
+		case "dump": {
+			if (rest.length < 1) {
+				console.error("dump command requires: <inputPath> [outDir]");
+				printHelp();
+				process.exitCode = 1;
+				return;
+			}
+			const inputPath = rest[0]!;
+			const outDir = rest[1] ?? ".";
+			await HyperionDump(inputPath, outDir);
 			return;
 		}
 		case "runtime": {
@@ -95,7 +110,7 @@ async function main() {
 			const inputPath = values[0]!;
 			const bundlePath = values[1]!;
 			const runtimePath = values[2]!;
-			await buildBundle(inputPath, bundlePath, { obfuscate });
+			await HyperionBuildBundle(inputPath, bundlePath, { obfuscate });
 			await buildRuntime(bundlePath, runtimePath, { obfuscate });
 			return;
 		}
